@@ -5,19 +5,28 @@ from models.student import Student
 from models.teacher import Teacher
 from models.course import Course
 
-
-# ----------------------------
-# System-level fixture
-# ----------------------------
 @pytest.fixture
 def sms():
-    """Fresh StudentManagementSystem for every test."""
     return StudentManagementSystem()
 
+@pytest.fixture
+def make_student():
+    def _make_student(student_id="S01", name="Alice"):
+        return Student(student_id, name)
+    return _make_student
 
-# ----------------------------
-# Sample entity factories
-# ----------------------------
+@pytest.fixture
+def make_teacher():
+    def _make_teacher(teacher_id="T01", name="Dr. Smith"):
+        return Teacher(teacher_id, name)
+    return _make_teacher
+
+@pytest.fixture
+def make_course():
+    def _make_course(code="CS101", name="Intro to Computer Science"):
+        return Course(code, name)
+    return _make_course
+
 @pytest.fixture
 def student_factory():
     """Returns a function that creates students with incremental IDs."""
@@ -30,28 +39,3 @@ def student_factory():
 
     return _create_student
 
-
-@pytest.fixture
-def teacher_factory():
-    """Returns a function that creates teachers with incremental IDs."""
-    counter = {"i": 0}
-
-    def _create_teacher(name="Teacher"):
-        counter["i"] += 1
-        tid = f"T{counter['i']:02d}"
-        return Teacher(tid, name)
-
-    return _create_teacher
-
-
-@pytest.fixture
-def course_factory():
-    """Returns a function that creates courses with incremental codes."""
-    counter = {"i": 0}
-
-    def _create_course(name="Course"):
-        counter["i"] += 1
-        code = f"C{counter['i']:02d}"
-        return Course(code, name)
-
-    return _create_course
