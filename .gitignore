@@ -1,0 +1,13 @@
+# IDE
+.idea/
+
+# Virtual environment
+.venv/
+
+# Bytecode cache
+__pycache__/
+*.pyc
+
+# OS garbage
+.DS_Store
+Thumbs.db
