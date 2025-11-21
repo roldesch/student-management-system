@@ -28,3 +28,16 @@ def test_assigning_a_teacher_to_a_course_that_already_has_a_teacher_assigned_rai
     with pytest.raises(TeacherAssignmentError):
         course.assign_teacher(teacher2)
 
+def test_unassigning_a_teacher_from_a_course_that_already_has_a_teacher_assigned_succeeds(make_course, make_teacher):
+    # Arrange
+    course = make_course()
+    teacher = make_teacher()
+    course.assign_teacher(teacher)
+    assert course.teacher is teacher # sanity check
+
+    # Act
+    course.unassign_teacher()
+
+    # Assert
+    assert course.teacher is None
+    assert course not in teacher.courses
