@@ -1,5 +1,5 @@
+#test_course.py
 import pytest
-
 from exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
 
 def test_assigning_a_teacher_to_a_course_that_has_no_teacher_assigned_succeeds(make_course, make_teacher):
@@ -14,3 +14,17 @@ def test_assigning_a_teacher_to_a_course_that_has_no_teacher_assigned_succeeds(m
     # Assert
     assert course.teacher is teacher
     assert course in teacher.courses
+
+def test_assigning_a_teacher_to_a_course_that_already_has_a_teacher_assigned_raises_teacherassignmenterror(make_course, make_teacher):
+    # Arrange
+    course = make_course()
+    teacher1 = make_teacher()
+    teacher2 = make_teacher()
+
+    # Act
+    course.assign_teacher(teacher1)
+
+    # Assert
+    with pytest.raises(TeacherAssignmentError):
+        course.assign_teacher(teacher2)
+
