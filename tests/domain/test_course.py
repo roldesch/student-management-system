@@ -65,3 +65,17 @@ def test_enrolling_a_student_in_a_course_when_the_student_is_not_yet_enrolled_su
     # Assert
     assert student in course.students
     assert course in student.courses
+
+def test_enrolling_a_student_in_a_course_when_the_student_is_already_enrolled_raises_enrollmenterror(
+    make_course,
+    make_student
+):
+    # Arrange
+    course = make_course()
+    student = make_student()
+    course.enroll(student)                # initial enrollment
+    assert student in course.students     # precondition
+
+    # Act/Assert
+    with pytest.raises(EnrollmentError):
+        course.enroll(student)
