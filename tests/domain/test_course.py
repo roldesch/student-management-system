@@ -79,3 +79,21 @@ def test_enrolling_a_student_in_a_course_when_the_student_is_already_enrolled_ra
     # Act/Assert
     with pytest.raises(EnrollmentError):
         course.enroll(student)
+
+def test_dropping_a_student_from_a_course_when_the_student_is_currently_enrolled_succeeds(
+    make_course,
+    make_student
+):
+    # Arrange
+    course = make_course()
+    student = make_student()
+    course.enroll(student)
+    assert student in course.students          # precondition
+    assert course in student.courses           # bidirectional precondition
+
+    # Act
+    course.drop(student)
+
+    # Assert
+    assert student not in course.students
+    assert course not in student.courses
