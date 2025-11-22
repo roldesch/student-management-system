@@ -1,7 +1,7 @@
 #test_course.py
 import pytest
 from exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
-from tests.conftest import make_course
+from tests.conftest import make_course, make_student
 
 
 def test_assigning_a_teacher_to_a_course_that_has_no_teacher_assigned_succeeds(make_course, make_teacher):
@@ -110,3 +110,23 @@ def test_dropping_a_student_from_a_course_when_the_student_is_not_enrolled_raise
     # Act / Assert
     with pytest.raises(EnrollmentError):
         course.drop(student)
+
+def test_assigning_a_valid_grade_to_a_student_enrolled_in_the_course_succeeds(
+    make_course,
+    make_student
+):
+    # Arrange
+    course = make_course()
+    student = make_student()
+    course.enroll(student)
+    assert student in course.students         # enrollment precondition
+    assert student.get_grade(course) in None  # no grade yet
+
+    # Act
+    student.assign_grade(course, 8,5)
+
+    # Assert
+    assert student.get_grade(course) == 8.5
+
+
+
