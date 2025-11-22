@@ -52,3 +52,16 @@ def test_unassigning_a_teacher_from_a_course_that_has_no_teacher_assigned_raises
     # Act / Assert
     with pytest.raises(TeacherAssignmentError):
         course.unassign_teacher()
+
+def test_enrolling_a_student_in_a_course_when_the_student_is_not_yet_enrolled_succeeds(make_course, make_student):
+    # Arrange
+    course = make_course()
+    student = make_student()
+    assert student not in course.students  # precondition
+
+    # Act
+    course.enroll(student)
+
+    # Assert
+    assert student in course.students
+    assert course in student.courses
