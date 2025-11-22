@@ -97,3 +97,16 @@ def test_dropping_a_student_from_a_course_when_the_student_is_currently_enrolled
     # Assert
     assert student not in course.students
     assert course not in student.courses
+
+def test_dropping_a_student_from_a_course_when_the_student_is_not_enrolled_raises_enrollmenterror(
+    make_course,
+    make_student
+):
+    # Arrange
+    course = make_course()
+    student = make_student()
+    assert student not in course.students    # precondition
+
+    # Act / Assert
+    with pytest.raises(EnrollmentError):
+        course.drop(student)
