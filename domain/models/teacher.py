@@ -3,7 +3,7 @@ from exceptions.domain_exceptions import TeacherAssignmentError, EntityError
 from typing import List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.course import Course
+    from domain.models.course import Course
 
 class Teacher:
     def __init__(self, teacher_id: str, name: str):
