@@ -93,6 +93,12 @@ The `tests/test_system.py` file provides a manual test suite to validate:
 
 Automated tests may be added in future iterations.
 
+## 📂 Test Documentation
+
+A detailed tree visualization of the test suite structure is available here:
+
+👉 [Test Suite Tree Visualization](docs/testing/tree_visualization.md)
+
 ---
 
 ## 🧩 Domain Model Overview

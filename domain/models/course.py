@@ -5,8 +5,8 @@ from exceptions.domain_exceptions import (
 from typing import Optional, List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.student import Student
-    from models.teacher import Teacher
+    from domain.models.student import Student
+    from domain.models.teacher import Teacher
 
 
 class Course:

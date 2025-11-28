@@ -1,8 +1,8 @@
 from typing import Dict
-from models.student import Student
-from models.teacher import Teacher
-from models.course import Course
-from exceptions.domain_exceptions import (
+from domain.models.student import Student
+from domain.models.teacher import Teacher
+from domain.models.course import Course
+from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
     DuplicateEntityError
 )

@@ -7,7 +7,7 @@ from exceptions.domain_exceptions import (
 from typing import List, Dict, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.course import Course
+    from domain.models.course import Course
 
 
 class Student:

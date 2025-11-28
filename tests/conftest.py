@@ -1,10 +1,10 @@
+#conftest.py
 import pytest
 
 from core.student_management_system import StudentManagementSystem
 from models.student import Student
 from models.teacher import Teacher
 from models.course import Course
-
 
 # ----------------------------
 # System-level fixture
@@ -14,12 +14,11 @@ def sms():
     """Fresh StudentManagementSystem for every test."""
     return StudentManagementSystem()
 
-
 # ----------------------------
 # Sample entity factories
 # ----------------------------
 @pytest.fixture
-def student_factory():
+def make_student():
     """Returns a function that creates students with incremental IDs."""
     counter = {"i": 0}
 
@@ -30,9 +29,8 @@ def student_factory():
 
     return _create_student
 
-
 @pytest.fixture
-def teacher_factory():
+def make_teacher():
     """Returns a function that creates teachers with incremental IDs."""
     counter = {"i": 0}
 
@@ -43,9 +41,8 @@ def teacher_factory():
 
     return _create_teacher
 
-
 @pytest.fixture
-def course_factory():
+def make_course():
     """Returns a function that creates courses with incremental codes."""
     counter = {"i": 0}
 
@@ -55,3 +52,6 @@ def course_factory():
         return Course(code, name)
 
     return _create_course
+
+
+
