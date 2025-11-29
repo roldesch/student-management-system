@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -36,7 +40,7 @@ jobs:
                 status: f.status,
                 patch: f.patch
               }))
-            }
+            };
 
       - name: Generate Review with GPT
         id: ai_review
@@ -55,16 +59,16 @@ jobs:
             }")
 
           echo "$RESPONSE" > review.json
-          echo "::set-output name=review::$(cat review.json | jq -r '.choices[0].message.content')"
+          echo "review=$(jq -r '.choices[0].message.content' review.json)" >> $GITHUB_OUTPUT
 
       - name: Post review comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.pulls.createReview({
+            await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
               event: "comment",
               body: `${{ steps.ai_review.outputs.review }}`
-            })
+            });
