@@ -128,5 +128,3 @@ The system follows a **rich domain model**:
 ## 📄 License
 
 This project is open for educational and personal use.
-
-
