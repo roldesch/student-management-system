@@ -65,7 +65,9 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const reviewBody = `${{ steps.ai_review.outputs.review }}` || "Automated review: no specific issues reported.";
+            const reviewBody =
+              ( "${{ steps.ai_review.outputs.review }}"?.trim() ) ||
+              "Automated review: no specific issues reported.";
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
