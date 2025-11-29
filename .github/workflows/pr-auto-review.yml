@@ -61,7 +61,7 @@ jobs:
           echo "$RESPONSE" > review.json
           echo "review=$(jq -r '.choices[0].message.content' review.json)" >> $GITHUB_OUTPUT
 
-            - name: Post review comment on PR
+      - name: Post review comment on PR
         uses: actions/github-script@v7
         with:
           script: |
@@ -73,5 +73,3 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body: reviewBody
             });
-
-
