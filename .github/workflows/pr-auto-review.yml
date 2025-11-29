@@ -69,6 +69,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
-              event: "comment",
+              event: "COMMENT",
               body: `${{ steps.ai_review.outputs.review }}`
             });
+
