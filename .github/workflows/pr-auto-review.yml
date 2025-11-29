@@ -61,17 +61,17 @@ jobs:
           echo "$RESPONSE" > review.json
           echo "review=$(jq -r '.choices[0].message.content' review.json)" >> $GITHUB_OUTPUT
 
-      - name: Post review comment on PR
+            - name: Post review comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            const reviewBody = `${{ steps.ai_review.outputs.review }}` || "Automated review: No specific issues found.";
+            const reviewBody = `${{ steps.ai_review.outputs.review }}` || "Automated review: no specific issues reported.";
 
-            await github.rest.pulls.createReview({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              event: "COMMENT",
+              issue_number: context.payload.pull_request.number,
               body: reviewBody
             });
+
 
