@@ -150,24 +150,42 @@ class StudentManagementSystem:
 
         self._teachers.remove(teacher_id)
 
-
-
     # ---------- Orchestration of domain operations ----------
+
     def assign_teacher_to_course(self, teacher_id: str, course_code: str) -> None:
+        """
+        Assign a teacher to a course.
+
+        Orchestration:
+        - Look up Teacher and Course via repositories.
+        - Delegate invariants (e.g., "course already has a teacher") to Course.
+        """
         teacher = self.get_teacher(teacher_id)
         course = self.get_course(course_code)
         course.assign_teacher(teacher)
 
     def unassign_teacher_from_course(self, course_code: str) -> None:
+        """
+        Unassign the teacher from a course (if is assigned).
+        """
         course = self.get_course(course_code)
         course.unassign_teacher()
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
+        """
+        Enroll a student in a course.
+
+        Delegates enrollment rules (duplicate checks, etc.) to Course.
+        """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
         course.enroll(student)
 
     def drop_student_from_course(self, student_id: str, course_code: str) -> None:
+        """
+        Drop a student from a course.
+        Delegates to Course.drop, which guarantees bidirectional cleanup.
+        """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
         course.drop(student)
