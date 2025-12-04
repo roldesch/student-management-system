@@ -1,24 +1,34 @@
-from typing import Dict
+# application/services/student_management_system.py
+
+from collections.abc import Iterable
+
 from domain.models.student import Student
 from domain.models.teacher import Teacher
 from domain.models.course import Course
-from domain.exceptions.domain_exceptions import (
-    EntityNotFoundError,
-    DuplicateEntityError
-)
-
+from domain.repositories.student_repository import StudentRepository
+from domain.repositories.teacher_repository import TeacherRepository
+from domain.repositories.course_repository import CourseRepository
 
 class StudentManagementSystem:
     """
     Application/service layer.
-    - Stores entities in in-memory dicts (IDs/codes as keys).
-    - Orchestrates domain operations by delegating to Course (aggregate root).
-    - Does NOT mutate Student/Teacher directly.
+
+    Responsibilities:
+    - Orchestrates use case (add entities, enroll, assign, grade, remove).
+    - Delegate all invariants to the domain model(Course/Student/Teacher).
+    - Depend on repository *interfaces* rather than concrete storage.
+      (Dependency Inversion: application ➜ domain abstractions).
     """
-    def __init__(self):
-        self._students: Dict[str, Student] = {}
-        self._teachers: Dict[str, Teacher] = {}
-        self._courses: Dict[str, Course] = {}
+
+    def __init__(
+            self,
+            student_repo: StudentRepository,
+            teacher_repo: TeacherRepository,
+            course_repo: CourseRepository,
+    ) -> None:
+        self._students = student_repo
+        self._teachers = teacher_repo
+        self._courses = course_repo
 
     # ---------- Create / Read ----------
     def add_student(self, student_id: str, name: str) -> Student:
