@@ -129,14 +129,22 @@ class StudentManagementSystem:
         del self._students[student_id]
 
     def remove_teacher(self, teacher_id: str) -> None:
+        """
+        Remove a teacher form the system.
+
+        Cleanup rules:
+        - For each course where the teacher is assigned, unassign them via Course.
+        """
         teacher = self.get_teacher(teacher_id)
 
         # Unassign from all courses where this teacher is assigned
-        for c in tuple(teacher.courses):
-            if c.teacher is teacher:
-                c.unassign_teacher()
+        for course in tuple(teacher.courses):
+            if course.teacher is teacher:
+                course.unassign_teacher()
 
-        del self._teachers[teacher_id]
+        self._teachers.remove(teacher_id)
+
+
 
     # ---------- Orchestration of domain operations ----------
     def assign_teacher_to_course(self, teacher_id: str, course_code: str) -> None:
