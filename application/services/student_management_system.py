@@ -80,6 +80,20 @@ class StudentManagementSystem:
         """
         return self._courses.get(code)
 
+    # Optional convenience query methods
+
+    def list_students(self) -> Iterable[Student]:
+        """Return all students as provided by the repository."""
+        return self._students.list_all()
+
+    def list_teacher(self) -> Iterable[Teacher]:
+        """Return all teachers as provided by the repository."""
+        return self._teachers.list_all()
+
+    def list_courses(self) -> Iterable[Course]:
+        """Return all courses as provided by the repository."""
+        return self._courses.list_all()
+
     # ---------- Delete (with cleanup via aggregate root) ----------
     def remove_course(self, code: str) -> None:
         course = self.get_course(code)
