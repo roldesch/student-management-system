@@ -52,13 +52,11 @@ class StudentManagementSystem:
         return teacher
 
     def add_course(self, code: str, name: str) -> Course:
-        if code in self._courses:
-            raise DuplicateEntityError(
-                f"Course code '{code}' already exists."
-            )
-
+        """
+        Create a new Course (aggregate root) and persist it via the CourseRepository.
+        """
         course = Course(code, name)
-        self._courses[code] = course
+        self._courses.add(course)
         return course
 
     def get_student(self, student_id: str) -> Student:
