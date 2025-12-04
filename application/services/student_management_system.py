@@ -96,17 +96,28 @@ class StudentManagementSystem:
 
     # ---------- Delete (with cleanup via aggregate root) ----------
     def remove_course(self, code: str) -> None:
+        """
+        Remove a course from the system.
+
+        Cleanup rules (same as pre-refactor):
+        - If the course has a teacher, unassign the teacher.
+        - Drop all enrolled students from the course.
+
+        Relationship cleanup is done through the Course aggregate, not by
+        mutating Student/Teacher directly.
+        """
         course = self.get_course(code)
 
         # Unassign teacher if present
         if course.teacher is not None:
             course.unassign_teacher()
 
-        # Drop all enrolled students (iterate over a snapshot)
-        for s in tuple(course.students):
-            course.drop(s)
+        # Drop all enrolled students (iterate over a snapshot to avoid mutating while iterating)
+        for student in tuple(course.students):
+            course.drop(student)
 
-        del self._courses[code]
+        # Finally remove from repository
+        self._courses.remove(code)
 
     def remove_student(self, student_id: str) -> None:
         student = self.get_student(student_id)
