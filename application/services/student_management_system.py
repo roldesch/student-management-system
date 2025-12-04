@@ -44,13 +44,11 @@ class StudentManagementSystem:
         return student
 
     def add_teacher(self, teacher_id: str, name: str) -> Teacher:
-        if teacher_id in self._teachers:
-            raise DuplicateEntityError(
-                f"Teacher id '{teacher_id}' already exists."
-                )
-
+        """
+        Create a new Teacher and persist it via the TeacherRepository.
+        """
         teacher = Teacher(teacher_id, name)
-        self._teachers[teacher_id] = teacher
+        self._teachers.add(teacher)
         return teacher
 
     def add_course(self, code: str, name: str) -> Course:
