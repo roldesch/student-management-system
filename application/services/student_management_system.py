@@ -31,14 +31,16 @@ class StudentManagementSystem:
         self._courses = course_repo
 
     # ---------- Create / Read ----------
-    def add_student(self, student_id: str, name: str) -> Student:
-        if student_id in self._students:
-            raise DuplicateEntityError(
-                f"Student id '{student_id}' already exists."
-            )
 
+    def add_student(self, student_id: str, name: str) -> Student:
+        """
+        Create a new Student and persist it via the StudentRepository.
+
+        Duplicate checking is the responsibility of the repository:
+        it should raise DuplicateEntityError if the ID already exists.
+        """
         student = Student(student_id, name)
-        self._students[student_id] = student
+        self._students.add(student)
         return student
 
     def add_teacher(self, teacher_id: str, name: str) -> Teacher:
