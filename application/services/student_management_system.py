@@ -60,24 +60,25 @@ class StudentManagementSystem:
         return course
 
     def get_student(self, student_id: str) -> Student:
-        if student_id not in self._students:
-            raise EntityNotFoundError(
-                f"Student id '{student_id}' not found."
-            )
+        """
+        Retrieve an existing Student by ID.
 
-        return self._students[student_id]
+        The repository is responsible for raising EntityNotFoundError
+        if the ID does not exist.
+        """
+        return self._students.get(student_id)
 
     def get_teacher(self, teacher_id: str) -> Teacher:
-        if teacher_id not in self._teachers:
-            raise EntityNotFoundError(f"Teacher id '{teacher_id}' not found.")
-        return self._teachers[teacher_id]
+        """
+        Retrieve an existing Teacher by ID.
+        """
+        return self._teachers.get(teacher_id)
 
     def get_course(self, code: str) -> Course:
-        if code not in self._courses:
-            raise EntityNotFoundError(
-                f"Course code '{code}' not found."
-            )
-        return self._courses[code]
+        """
+        Retrieve an existing Course by code.
+        """
+        return self._courses.get(code)
 
     # ---------- Delete (with cleanup via aggregate root) ----------
     def remove_course(self, code: str) -> None:
