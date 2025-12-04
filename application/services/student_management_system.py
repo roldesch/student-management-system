@@ -120,13 +120,19 @@ class StudentManagementSystem:
         self._courses.remove(code)
 
     def remove_student(self, student_id: str) -> None:
+        """
+        Remove a student from the system.
+
+        Cleanup rules:
+        - Drop the student from all courses they are enrolled in via Course.drop.
+        """
         student = self.get_student(student_id)
 
-        # Drop this student from all their courses via Course
-        for c in tuple(student.courses):
-            c.drop(student)
+        # Drop this student from all their courses via Course (aggregate root)
+        for course in tuple(student.courses):
+            course.drop(student)
 
-        del self._students[student_id]
+        self._students.remove(student_id)
 
     def remove_teacher(self, teacher_id: str) -> None:
         """
