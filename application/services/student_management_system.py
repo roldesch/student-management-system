@@ -136,7 +136,7 @@ class StudentManagementSystem:
 
     def remove_teacher(self, teacher_id: str) -> None:
         """
-        Remove a teacher form the system.
+        Remove a teacher from the system.
 
         Cleanup rules:
         - For each course where the teacher is assigned, unassign them via Course.
@@ -166,7 +166,7 @@ class StudentManagementSystem:
 
     def unassign_teacher_from_course(self, course_code: str) -> None:
         """
-        Unassign the teacher from a course (if is assigned).
+        Unassign the teacher from a course (if it is assigned).
         """
         course = self.get_course(course_code)
         course.unassign_teacher()
@@ -199,7 +199,7 @@ class StudentManagementSystem:
 
         Invariants are enforced by Student.assign_grade:
         - Student must be enrolled in the course.
-        - Grade must ve within allowed range.
+        - Grade must be within allowed range.
         """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
@@ -219,7 +219,7 @@ class StudentManagementSystem:
             self, student_id: str, course_code: str
     ) -> float | None:
         """
-        Retrieve a student's grade for a given course, or None if not set.
+        Retrieve a student's grade for a given course, or None if it not set.
         """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
