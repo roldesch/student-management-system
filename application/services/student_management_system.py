@@ -191,17 +191,36 @@ class StudentManagementSystem:
         course.drop(student)
 
     # ---------- Grades (owned by Student, validated by enrollment) ----------
-    def assign_grade_to_student(self, student_id: str, course_code: str, value: float) -> None:
+    def assign_grade_to_student(
+            self, student_id: str, course_code: str, value: float
+    ) -> None:
+        """
+        Assign a grade to a student for a given course.
+
+        Invariants are enforced by Student.assign_grade:
+        - Student must be enrolled in the course.
+        - Grade must ve within allowed range.
+        """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
         student.assign_grade(course, value)
 
-    def remove_grade_from_student(self, student_id: str, course_code: str) -> None:
+    def remove_grade_from_student(
+            self, student_id: str, course_code: str
+    ) -> None:
+        """
+        Remove an existing grade for a student in a course.
+        """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
         student.remove_grade(course)
 
-    def get_student_grade(self, student_id: str, course_code: str) -> float | None:
+    def get_student_grade(
+            self, student_id: str, course_code: str
+    ) -> float | None:
+        """
+        Retrieve a student's grade for a given course, or None if not set.
+        """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
         return student.get_grade(course)
