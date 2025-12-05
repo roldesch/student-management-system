@@ -86,7 +86,7 @@ class StudentManagementSystem:
         """Return all students as provided by the repository."""
         return self._students.list_all()
 
-    def list_teacher(self) -> Iterable[Teacher]:
+    def list_teachers(self) -> Iterable[Teacher]:
         """Return all teachers as provided by the repository."""
         return self._teachers.list_all()
 
