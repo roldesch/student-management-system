@@ -14,8 +14,8 @@ class StudentManagementSystem:
     Application/service layer.
 
     Responsibilities:
-    - Orchestrates use case (add entities, enroll, assign, grade, remove).
-    - Delegate all invariants to the domain model(Course/Student/Teacher).
+    - Orchestrates use cases (add entities, enroll, assign, grade, remove).
+    - Delegate all invariants to the domain model (Course/Student/Teacher).
     - Depend on repository *interfaces* rather than concrete storage.
       (Dependency Inversion: application ➜ domain abstractions).
     """
@@ -26,9 +26,10 @@ class StudentManagementSystem:
             teacher_repo: TeacherRepository,
             course_repo: CourseRepository,
     ) -> None:
-        self._students = student_repo
-        self._teachers = teacher_repo
-        self._courses = course_repo
+        # Injected repository dependencies (ports)
+        self.student_repo = student_repo
+        self.teacher_repo = teacher_repo
+        self.course_repo = course_repo
 
     # ---------- Create / Read ----------
 
@@ -40,7 +41,7 @@ class StudentManagementSystem:
         it should raise DuplicateEntityError if the ID already exists.
         """
         student = Student(student_id, name)
-        self._students.add(student)
+        self.student_repo.add(student)
         return student
 
     def add_teacher(self, teacher_id: str, name: str) -> Teacher:
@@ -48,15 +49,15 @@ class StudentManagementSystem:
         Create a new Teacher and persist it via the TeacherRepository.
         """
         teacher = Teacher(teacher_id, name)
-        self._teachers.add(teacher)
+        self.teacher_repo.add(teacher)
         return teacher
 
-    def add_course(self, code: str, name: str) -> Course:
+    def add_course(self, course_code: str, name: str) -> Course:
         """
         Create a new Course (aggregate root) and persist it via the CourseRepository.
         """
-        course = Course(code, name)
-        self._courses.add(course)
+        course = Course(course_code, name)
+        self.course_repo.add(course)
         return course
 
     def get_student(self, student_id: str) -> Student:
@@ -66,36 +67,36 @@ class StudentManagementSystem:
         The repository is responsible for raising EntityNotFoundError
         if the ID does not exist.
         """
-        return self._students.get(student_id)
+        return self.student_repo.get(student_id)
 
     def get_teacher(self, teacher_id: str) -> Teacher:
         """
         Retrieve an existing Teacher by ID.
         """
-        return self._teachers.get(teacher_id)
+        return self.teacher_repo.get(teacher_id)
 
     def get_course(self, code: str) -> Course:
         """
         Retrieve an existing Course by code.
         """
-        return self._courses.get(code)
+        return self.course_repo.get(code)
 
     # Optional convenience query methods
 
     def list_students(self) -> Iterable[Student]:
         """Return all students as provided by the repository."""
-        return self._students.list_all()
+        return self.student_repo.list_all()
 
     def list_teachers(self) -> Iterable[Teacher]:
         """Return all teachers as provided by the repository."""
-        return self._teachers.list_all()
+        return self.teacher_repo.list_all()
 
     def list_courses(self) -> Iterable[Course]:
         """Return all courses as provided by the repository."""
-        return self._courses.list_all()
+        return self.course_repo.list_all()
 
     # ---------- Delete (with cleanup via aggregate root) ----------
-    def remove_course(self, code: str) -> None:
+    def remove_course(self, course_code: str) -> None:
         """
         Remove a course from the system.
 
@@ -106,7 +107,7 @@ class StudentManagementSystem:
         Relationship cleanup is done through the Course aggregate, not by
         mutating Student/Teacher directly.
         """
-        course = self.get_course(code)
+        course = self.get_course(course_code)
 
         # Unassign teacher if present
         if course.teacher is not None:
@@ -117,7 +118,7 @@ class StudentManagementSystem:
             course.drop(student)
 
         # Finally remove from repository
-        self._courses.remove(code)
+        self.course_repo.remove(course_code)
 
     def remove_student(self, student_id: str) -> None:
         """
@@ -132,7 +133,7 @@ class StudentManagementSystem:
         for course in tuple(student.courses):
             course.drop(student)
 
-        self._students.remove(student_id)
+        self.student_repo.remove(student_id)
 
     def remove_teacher(self, teacher_id: str) -> None:
         """
@@ -148,7 +149,7 @@ class StudentManagementSystem:
             if course.teacher is teacher:
                 course.unassign_teacher()
 
-        self._teachers.remove(teacher_id)
+        self.teacher_repo.remove(teacher_id)
 
     # ---------- Orchestration of domain operations ----------
 
@@ -219,7 +220,7 @@ class StudentManagementSystem:
             self, student_id: str, course_code: str
     ) -> float | None:
         """
-        Retrieve a student's grade for a given course, or None if it not set.
+        Retrieve a student's grade for a given course, or None if it is not set.
         """
         student = self.get_student(student_id)
         course = self.get_course(course_code)
