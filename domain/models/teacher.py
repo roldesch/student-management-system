@@ -1,4 +1,7 @@
-from exceptions.domain_exceptions import TeacherAssignmentError, EntityError
+from domain.exceptions.domain_exceptions import (
+    TeacherAssignmentError,
+    EntityError,
+)
 
 from typing import List, Tuple, TYPE_CHECKING
 

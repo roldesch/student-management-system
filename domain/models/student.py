@@ -1,7 +1,7 @@
-from exceptions.domain_exceptions import (
-    EntityError,
+from domain.exceptions.domain_exceptions import (
+    EnrollmentError,
     GradeError,
-    EnrollmentError
+    EntityError
 )
 
 from typing import List, Dict, Optional, Tuple, TYPE_CHECKING
