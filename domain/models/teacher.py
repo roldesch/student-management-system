@@ -1,4 +1,7 @@
-from exceptions.domain_exceptions import TeacherAssignmentError, EntityError
+from domain.exceptions.domain_exceptions import (
+    TeacherAssignmentError,
+    EntityError,
+)
 
 from typing import List, Tuple, TYPE_CHECKING
 
@@ -47,6 +50,6 @@ class Teacher:
         self._name = new_name
 
     @property
-    def courses(self) -> Tuple[Course, ...]:
+    def courses(self) -> Tuple["Course", ...]:
         return tuple(self._courses)
 

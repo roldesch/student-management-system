@@ -1,7 +1,9 @@
-from exceptions.domain_exceptions import (
+# domain/models/course.py
+from domain.exceptions.domain_exceptions import (
     EnrollmentError,
-    TeacherAssignmentError
+    TeacherAssignmentError,
 )
+
 from typing import Optional, List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:

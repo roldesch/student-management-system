@@ -1,6 +1,7 @@
-#test_course.py
+#tests/domain/test_course.py
 import pytest
-from exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
+
+from domain.exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
 from tests.conftest import make_course, make_student
 
 
@@ -120,10 +121,10 @@ def test_assigning_a_valid_grade_to_a_student_enrolled_in_the_course_succeeds(
     student = make_student()
     course.enroll(student)
     assert student in course.students         # enrollment precondition
-    assert student.get_grade(course) in None  # no grade yet
+    assert student.get_grade(course) is None  # no grade yet
 
     # Act
-    student.assign_grade(course, 8,5)
+    student.assign_grade(course, 8.5)
 
     # Assert
     assert student.get_grade(course) == 8.5

@@ -1,18 +1,33 @@
-#conftest.py
+#tests/conftest.py
 import pytest
 
-from core.student_management_system import StudentManagementSystem
-from models.student import Student
-from models.teacher import Teacher
-from models.course import Course
+from application.services.student_management_system import StudentManagementSystem
+
+from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
+from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
+from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
+
+from domain.models.student import Student
+from domain.models.teacher import Teacher
+from domain.models.course import Course
+
 
 # ----------------------------
 # System-level fixture
 # ----------------------------
 @pytest.fixture
 def sms():
-    """Fresh StudentManagementSystem for every test."""
-    return StudentManagementSystem()
+    """
+    Fresh StudentManagementSystem for every test.
+
+    This is the correct way to initialize the SMS after refactoring:
+    using dependency-injected repository implementations.
+    """
+    return StudentManagementSystem(
+        student_repo=InMemoryStudentRepository(),
+        teacher_repo=InMemoryTeacherRepository(),
+        course_repo=InMemoryCourseRepository(),
+    )
 
 # ----------------------------
 # Sample entity factories
