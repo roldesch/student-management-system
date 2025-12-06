@@ -50,6 +50,6 @@ class Teacher:
         self._name = new_name
 
     @property
-    def courses(self) -> Tuple[Course, ...]:
+    def courses(self) -> Tuple["Course", ...]:
         return tuple(self._courses)
 
