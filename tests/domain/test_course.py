@@ -1,6 +1,7 @@
-#test_course.py
+#tests/domain/test_course.py
 import pytest
-from exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
+
+from domain.exceptions.domain_exceptions import EnrollmentError, TeacherAssignmentError
 from tests.conftest import make_course, make_student
 
 
