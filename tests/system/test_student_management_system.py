@@ -91,7 +91,7 @@ def test_assign_and_get_grades(sms):
 
     # Grade requires enrollment
     sms.add_student("S02", "Bob")
-    with pytest.raises(EnrollmentError):
+    with pytest.raises(GradeError):
         sms.assign_grade_to_student("S02", "C01", 8.0)
 
 
