@@ -1,10 +1,11 @@
 # application/responses/student_response.py
 
 from dataclasses import dataclass
-from typing import Dict, List
+from types import MappingProxyType
+from typing import Tuple, Mapping
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class StudentResponse:
     """
     A read-only application-level representation of a student,
@@ -17,5 +18,18 @@ class StudentResponse:
 
     student_id: str
     name: str
-    enrolled_courses: List[str]         # list of course codes
-    grades: Dict[str, float]            # course_code -> grade
+    enrolled_courses: Tuple[str, ...]
+    grades: Mapping[str, float]
+
+    def __init__(
+            self,
+            *,
+            student_id: str,
+            name: str,
+            enrolled_courses: list[str],
+            grades: dict[str, float],
+    ) -> None:
+        object.__setattr__(self, "student_id", student_id)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "enrolled_courses", tuple(enrolled_courses))
+        object.__setattr__(self, "grades", MappingProxyType(dict(grades)))
