@@ -35,9 +35,9 @@ def test_studentresponse_is_immutable():
     )
 
     with pytest.raises(FrozenInstanceError):
-        response.student_id = "NEW-ID"
+        setattr(response, "student_id", "NEW-ID")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         response.enrolled_courses.append("C02")
 
     with pytest.raises(TypeError):
@@ -80,9 +80,9 @@ def test_teacherresponse_is_immutable():
     )
 
     with pytest.raises(FrozenInstanceError):
-        response.teacher_id = "NEW-ID"
+        setattr(response, "teacher_id", "NEW-ID")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         response.course_codes.append("C02")
 
 
@@ -135,9 +135,9 @@ def test_courseresponse_is_immutable():
     )
 
     with pytest.raises(FrozenInstanceError):
-        response.course_code = "NEW"
+        setattr(response, "course_code" "NEW")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         response.student_ids.append("S99")
 
 
