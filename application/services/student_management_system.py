@@ -1,6 +1,8 @@
 # application/services/student_management_system.py
 
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import Optional
 
 from domain.models.student import Student
 from domain.models.teacher import Teacher
@@ -9,15 +11,28 @@ from domain.repositories.student_repository import StudentRepository
 from domain.repositories.teacher_repository import TeacherRepository
 from domain.repositories.course_repository import CourseRepository
 
+from application.mappers.student_mapper import StudentMapper
+from application.mappers.teacher_mapper import TeacherMapper
+from application.mappers.course_mapper import CourseMapper
+
+from application.responses.student_response import StudentResponse
+from application.responses.teacher_response import TeacherResponse
+from application.responses.course_response import CourseResponse
+
+
 class StudentManagementSystem:
     """
     Application/service layer.
 
     Responsibilities:
     - Orchestrates use cases (add entities, enroll, assign, grade, remove).
-    - Delegate all invariants to the domain model (Course/Student/Teacher).
-    - Depend on repository *interfaces* rather than concrete storage.
+    - Delegates all invariants to the domain model (Course/Student/Teacher).
+    - Depends on repository *interfaces* rather than concrete storage.
       (Dependency Inversion: application ➜ domain abstractions).
+
+    DTO boundary:
+    - Domain entities NEVER escape this layer.
+    - Public methods return Response Models, primitives, or None.
     """
 
     def __init__(
@@ -31,71 +46,132 @@ class StudentManagementSystem:
         self.teacher_repo = teacher_repo
         self.course_repo = course_repo
 
-    # ---------- Create / Read ----------
+    # ------------------------------------------------------------------
+    # Internal helpers — domain entity access (PRIVATE)
+    # ------------------------------------------------------------------
 
-    def add_student(self, student_id: str, name: str) -> Student:
+    def _get_student_entity(self, student_id: str) -> Student:
+        return self.student_repo.get(student_id)
+
+    def _get_teacher_entity(self, teacher_id: str) -> Teacher:
+        return self.teacher_repo.get(teacher_id)
+
+    def _get_course_entity(self, course_code: str) -> Course:
+        return self.course_repo.get(course_code)
+
+    # ------------------------------------------------------------------
+    # Internal helpers — Domain → DTO → Response (PRIVATE)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _student_response_from_domain(student: Student) -> StudentResponse:
+        dto = StudentMapper.to_dto(student)
+        return StudentResponse(
+            student_id=dto.student_id,
+            name=dto.name,
+            enrolled_courses=list(dto.enrolled_courses),
+            grades=dict(dto.grades),
+        )
+
+    @staticmethod
+    def _teacher_response_from_domain(teacher: Teacher) -> TeacherResponse:
+        dto = TeacherMapper.to_dto(teacher)
+        return TeacherResponse(
+            teacher_id=dto.teacher_id,
+            name=dto.name,
+            course_codes=list(dto.course_codes),
+        )
+
+    @staticmethod
+    def _course_response_from_domain(course: Course) -> CourseResponse:
+        dto = CourseMapper.to_dto(course)
+        return CourseResponse(
+            course_code=dto.course_code,
+            name=dto.name,
+            teacher_id=dto.teacher_id,
+            student_ids=list(dto.student_ids),
+        )
+
+    # ------------------------------------------------------------------
+    # Create / Read (PUBLIC — return Response Models)
+    # ------------------------------------------------------------------
+
+    def add_student(self, student_id: str, name: str) -> StudentResponse:
         """
         Create a new Student and persist it via the StudentRepository.
 
-        Duplicate checking is the responsibility of the repository:
-        it should raise DuplicateEntityError if the ID already exists.
+        Duplicate checking is the responsibility of the repository.
         """
         student = Student(student_id, name)
         self.student_repo.add(student)
-        return student
+        return self._student_response_from_domain(student)
 
-    def add_teacher(self, teacher_id: str, name: str) -> Teacher:
+    def add_teacher(self, teacher_id: str, name: str) -> TeacherResponse:
         """
         Create a new Teacher and persist it via the TeacherRepository.
         """
         teacher = Teacher(teacher_id, name)
         self.teacher_repo.add(teacher)
-        return teacher
+        return self._teacher_response_from_domain(teacher)
 
-    def add_course(self, course_code: str, name: str) -> Course:
+    def add_course(self, course_code: str, name: str) -> CourseResponse:
         """
         Create a new Course (aggregate root) and persist it via the CourseRepository.
         """
         course = Course(course_code, name)
         self.course_repo.add(course)
-        return course
+        return self._course_response_from_domain(course)
 
-    def get_student(self, student_id: str) -> Student:
+    def get_student(self, student_id: str) -> StudentResponse:
         """
-        Retrieve an existing Student by ID.
-
-        The repository is responsible for raising EntityNotFoundError
-        if the ID does not exist.
+        Retrieve an existing Student by ID as an immutable snapshot.
         """
-        return self.student_repo.get(student_id)
+        student = self._get_student_entity(student_id)
+        return self._student_response_from_domain(student)
 
-    def get_teacher(self, teacher_id: str) -> Teacher:
+    def get_teacher(self, teacher_id: str) -> TeacherResponse:
         """
-        Retrieve an existing Teacher by ID.
+        Retrieve an existing Teacher by ID as an immutable snapshot.
         """
-        return self.teacher_repo.get(teacher_id)
+        teacher = self._get_teacher_entity(teacher_id)
+        return self._teacher_response_from_domain(teacher)
 
-    def get_course(self, code: str) -> Course:
+    def get_course(self, code: str) -> CourseResponse:
         """
-        Retrieve an existing Course by code.
+        Retrieve an existing Course by code as an immutable snapshot.
         """
-        return self.course_repo.get(code)
+        course = self._get_course_entity(code)
+        return self._course_response_from_domain(course)
 
-    # Optional convenience query methods
+    # ------------------------------------------------------------------
+    # Optional convenience query methods (PUBLIC)
+    # ------------------------------------------------------------------
 
-    def list_students(self) -> Iterable[Student]:
-        """Return all students as provided by the repository."""
-        return self.student_repo.list_all()
+    def list_students(self) -> tuple[StudentResponse, ...]:
+        """Return all students as immutable snapshots."""
+        return tuple(
+            self._student_response_from_domain(s)
+            for s in self.student_repo.list_all()
+        )
 
-    def list_teachers(self) -> Iterable[Teacher]:
-        """Return all teachers as provided by the repository."""
-        return self.teacher_repo.list_all()
+    def list_teachers(self) -> tuple[TeacherResponse, ...]:
+        """Return all teachers as immutable snapshots."""
+        return tuple(
+            self._teacher_response_from_domain(t)
+            for t in self.teacher_repo.list_all()
+        )
 
-    def list_courses(self) -> Iterable[Course]:
-        """Return all courses as provided by the repository."""
-        return self.course_repo.list_all()
+    def list_courses(self) -> tuple[CourseResponse, ...]:
+        """Return all courses as immutable snapshots."""
+        return tuple(
+            self._course_response_from_domain(c)
+            for c in self.course_repo.list_all()
+        )
 
-    # ---------- Delete (with cleanup via aggregate root) ----------
+    # ------------------------------------------------------------------
+    # Delete (with cleanup via aggregate root) — PUBLIC COMMANDS
+    # ------------------------------------------------------------------
+
     def remove_course(self, course_code: str) -> None:
         """
         Remove a course from the system.
@@ -104,10 +180,9 @@ class StudentManagementSystem:
         - If the course has a teacher, unassign the teacher.
         - Drop all enrolled students from the course.
 
-        Relationship cleanup is done through the Course aggregate, not by
-        mutating Student/Teacher directly.
+        Relationship cleanup is done through the Course aggregate.
         """
-        course = self.get_course(course_code)
+        course = self._get_course_entity(course_code)
 
         # Unassign teacher if present
         if course.teacher is not None:
@@ -125,9 +200,9 @@ class StudentManagementSystem:
         Remove a student from the system.
 
         Cleanup rules:
-        - Drop the student from all courses they are enrolled in via Course.drop.
+        - Drop the student from all courses they are enrolled in.
         """
-        student = self.get_student(student_id)
+        student = self._get_student_entity(student_id)
 
         # Drop this student from all their courses via Course (aggregate root)
         for course in tuple(student.courses):
@@ -140,9 +215,9 @@ class StudentManagementSystem:
         Remove a teacher from the system.
 
         Cleanup rules:
-        - For each course where the teacher is assigned, unassign them via Course.
+        - Unassign the teacher from all courses where they are assigned.
         """
-        teacher = self.get_teacher(teacher_id)
+        teacher = self._get_teacher_entity(teacher_id)
 
         # Unassign from all courses where this teacher is assigned
         for course in tuple(teacher.courses):
@@ -151,47 +226,51 @@ class StudentManagementSystem:
 
         self.teacher_repo.remove(teacher_id)
 
-    # ---------- Orchestration of domain operations ----------
+    # ------------------------------------------------------------------
+    # Orchestration of domain operations — PUBLIC COMMANDS
+    # ------------------------------------------------------------------
 
     def assign_teacher_to_course(self, teacher_id: str, course_code: str) -> None:
         """
         Assign a teacher to a course.
 
-        Orchestration:
-        - Look up Teacher and Course via repositories.
-        - Delegate invariants (e.g., "course already has a teacher") to Course.
+        Invariants are enforced by the Course aggregate.
         """
-        teacher = self.get_teacher(teacher_id)
-        course = self.get_course(course_code)
+        teacher = self._get_teacher_entity(teacher_id)
+        course = self._get_course_entity(course_code)
         course.assign_teacher(teacher)
 
     def unassign_teacher_from_course(self, course_code: str) -> None:
         """
-        Unassign the teacher from a course (if it is assigned).
+        Unassign the teacher from a course (if assigned).
         """
-        course = self.get_course(course_code)
+        course = self._get_course_entity(course_code)
         course.unassign_teacher()
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
         """
         Enroll a student in a course.
 
-        Delegates enrollment rules (duplicate checks, etc.) to Course.
+        Enrollment rules are enforced by the Course aggregate.
         """
-        student = self.get_student(student_id)
-        course = self.get_course(course_code)
+        student = self._get_student_entity(student_id)
+        course = self._get_course_entity(course_code)
         course.enroll(student)
 
     def drop_student_from_course(self, student_id: str, course_code: str) -> None:
         """
         Drop a student from a course.
-        Delegates to Course.drop, which guarantees bidirectional cleanup.
+
+        Guarantees bidirectional cleanup via Course.drop.
         """
-        student = self.get_student(student_id)
-        course = self.get_course(course_code)
+        student = self._get_student_entity(student_id)
+        course = self._get_course_entity(course_code)
         course.drop(student)
 
-    # ---------- Grades (owned by Student, validated by enrollment) ----------
+    # ------------------------------------------------------------------
+    # Grades (owned by Student) — PUBLIC
+    # ------------------------------------------------------------------
+
     def assign_grade_to_student(
             self, student_id: str, course_code: str, value: float
     ) -> None:
@@ -199,29 +278,29 @@ class StudentManagementSystem:
         Assign a grade to a student for a given course.
 
         Invariants are enforced by Student.assign_grade:
-        - Student must be enrolled in the course.
-        - Grade must be within allowed range.
         """
-        student = self.get_student(student_id)
-        course = self.get_course(course_code)
+        student = self._get_student_entity(student_id)
+        course = self._get_course_entity(course_code)
         student.assign_grade(course, value)
 
     def remove_grade_from_student(
             self, student_id: str, course_code: str
     ) -> None:
         """
-        Remove an existing grade for a student in a course.
+        Remove a grade from a student for a given course.
         """
-        student = self.get_student(student_id)
-        course = self.get_course(course_code)
+        student = self._get_student_entity(student_id)
+        course = self._get_course_entity(course_code)
         student.remove_grade(course)
 
     def get_student_grade(
             self, student_id: str, course_code: str
-    ) -> float | None:
+    ) -> Optional[float]:
         """
         Retrieve a student's grade for a given course, or None if it is not set.
+
+        This method returns a primitive and is therefore boundary-safe.
         """
-        student = self.get_student(student_id)
-        course = self.get_course(course_code)
+        student = self._get_student_entity(student_id)
+        course = self._get_course_entity(course_code)
         return student.get_grade(course)
