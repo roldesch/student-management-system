@@ -6,30 +6,36 @@ from domain.exceptions.domain_exceptions import (
     TeacherAssignmentError,
     GradeError,
 )
-# 1. -------------------------------------------------------------
-# Create entities
-# -------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# 1. Create entities
+# -------------------------------------------------------------------
 
 def test_create_entities(sms):
     s1 = sms.add_student("S01", "Alice")
     t1 = sms.add_teacher("T01", "Dr. Smith")
     c1 = sms.add_course("C01", "Math")
 
-    # Repositories should contain them
-    assert sms.get_student("S01") is s1
-    assert sms.get_teacher("T01") is t1
-    assert sms.get_course("C01") is c1
+    # Re-query via the service (snapshots)
+    s = sms.get_student("S01")
+    t = sms.get_teacher("T01")
+    c = sms.get_course("C01")
+
+    assert s.student_id == "S01"
+    assert t.teacher_id == "T01"
+    assert c.course_code == "C01"
 
     # No relationships yet
-    assert not s1.courses
-    assert not t1.courses
-    assert not c1.students
-    assert c1.teacher is None
+    assert s.enrolled_courses == ()
+    assert t.course_codes == ()
+    assert c.student_ids == ()
+    assert c.teacher_id is None
 
 
-# 2. -------------------------------------------------------------
-# Assign teacher to course
-# -------------------------------------------------------------
+# -------------------------------------------------------------------
+# 2. Assign teacher to course
+# -------------------------------------------------------------------
 
 def test_assign_teacher_to_course(sms):
     sms.add_teacher("T01", "Dr. Smith")
@@ -40,17 +46,17 @@ def test_assign_teacher_to_course(sms):
     teacher = sms.get_teacher("T01")
     course = sms.get_course("C01")
 
-    assert course.teacher is teacher
-    assert course in teacher.courses
+    assert course.teacher_id == "T01"
+    assert "C01" in teacher.course_codes
 
     # Assign again should fail
     with pytest.raises(TeacherAssignmentError):
         sms.assign_teacher_to_course("T01", "C01")
 
 
-# 3. -------------------------------------------------------------
-# Enroll students in course
-# -------------------------------------------------------------
+# -------------------------------------------------------------------
+# 3. Enroll students in course
+# -------------------------------------------------------------------
 
 def test_enroll_students(sms):
     sms.add_student("S01", "Alice")
@@ -63,17 +69,17 @@ def test_enroll_students(sms):
     course = sms.get_course("C01")
     s1 = sms.get_student("S01")
 
-    assert sms.get_student("S01") in course.students
-    assert course in s1.courses
+    assert set(course.student_ids) == {"S01", "S02"}
+    assert "C01" in s1.enrolled_courses
 
     # Enrolling the same student again raises EnrollmentError
     with pytest.raises(EnrollmentError):
         sms.enroll_student_in_course("S01", "C01")
 
 
-# 4. -------------------------------------------------------------
-# Assign and retrieve grades
-# -------------------------------------------------------------
+# -------------------------------------------------------------------
+# 4. Assign and retrieve grades
+# -------------------------------------------------------------------
 
 def test_assign_and_get_grades(sms):
     sms.add_student("S01", "Alice")
@@ -95,9 +101,9 @@ def test_assign_and_get_grades(sms):
         sms.assign_grade_to_student("S02", "C01", 8.0)
 
 
-# 5. -------------------------------------------------------------
-# Removing a course cleans up relationships
-# -------------------------------------------------------------
+# -------------------------------------------------------------------
+# 5. Removing a course cleans up relationships
+# -------------------------------------------------------------------
 
 def test_remove_course_cleanup(sms):
     sms.add_student("S01", "Alice")
@@ -112,14 +118,14 @@ def test_remove_course_cleanup(sms):
     student = sms.get_student("S01")
     teacher = sms.get_teacher("T01")
 
-    assert "C01" not in [c.code for c in sms.list_courses()]
-    assert not student.courses
-    assert not teacher.courses
+    assert "C01" not in [c.code_code for c in sms.list_courses()]
+    assert student.enrolled_courses == ()
+    assert teacher.course_codes == ()
 
 
-# 6. -------------------------------------------------------------
-# Removing a student cleans up
-# -------------------------------------------------------------
+# -------------------------------------------------------------------
+# 6. Removing a student cleans up
+# -------------------------------------------------------------------
 
 def test_remove_student_cleanup(sms):
     sms.add_student("S01", "Alice")
@@ -130,7 +136,8 @@ def test_remove_student_cleanup(sms):
 
     course = sms.get_course("C01")
 
-    assert all(s.student_id != "S01" for s in course.students)
+    assert "S01" not in course.student_ids
+
 
 # -------------------------------------------------------------------
 # 7. Removing a teacher cleans up relationships
@@ -144,5 +151,4 @@ def test_remove_teacher_cleanup(sms):
     sms.remove_teacher("T01")
     course = sms.get_course("C01")
 
-    assert course.teacher is None
-
+    assert course.teacher_id is None
