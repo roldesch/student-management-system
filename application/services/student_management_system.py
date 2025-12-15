@@ -171,7 +171,7 @@ class StudentManagementSystem:
     # ------------------------------------------------------------------
     # Delete (with cleanup via aggregate root) — PUBLIC COMMANDS
     # ------------------------------------------------------------------
-    
+
     def remove_course(self, course_code: str) -> None:
         """
         Remove a course from the system.

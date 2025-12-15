@@ -135,7 +135,7 @@ def test_courseresponse_is_immutable():
     )
 
     with pytest.raises(FrozenInstanceError):
-        setattr(response, "course_code" "NEW")
+        setattr(response, "course_code", "NEW")
 
     with pytest.raises(AttributeError):
         response.student_ids.append("S99")
