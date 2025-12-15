@@ -26,8 +26,8 @@ class CourseResponse:
             *,
             course_code: str,
             name: str,
-        teacher_id: Optional[str],
-        student_ids: list[str],
+            teacher_id: Optional[str],
+            student_ids: list[str],
     ) -> None:
         object.__setattr__(self, "course_code", course_code)
         object.__setattr__(self, "name", name)
