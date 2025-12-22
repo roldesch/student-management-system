@@ -197,7 +197,45 @@ class StudentManagementSystem:
     def add_course(self, course_code: str, name: str) -> CourseResponse:
         """
         Create a new Course (aggregate root) and persist it via the CourseRepository.
+
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+        
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         course = Course(course_code, name)
         self.course_repo.add(course)
         return self._course_response_from_domain(course)
