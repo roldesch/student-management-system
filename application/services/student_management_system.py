@@ -152,7 +152,44 @@ class StudentManagementSystem:
     def add_teacher(self, teacher_id: str, name: str) -> TeacherResponse:
         """
         Create a new Teacher and persist it via the TeacherRepository.
+
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # teacher_id validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            raise InvalidIdentifierError(field="teacher_id")
+
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = Teacher(teacher_id, name)
         self.teacher_repo.add(teacher)
         return self._teacher_response_from_domain(teacher)
