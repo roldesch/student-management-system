@@ -19,6 +19,13 @@ from application.responses.student_response import StudentResponse
 from application.responses.teacher_response import TeacherResponse
 from application.responses.course_response import CourseResponse
 
+from application.validation.errors import (
+    MissingFieldError,
+    EmptyValueError,
+    InvalidTypeError,
+    InvalidIdentifierError,
+)
+
 
 class StudentManagementSystem:
     """
@@ -100,8 +107,44 @@ class StudentManagementSystem:
         """
         Create a new Student and persist it via the StudentRepository.
 
-        Duplicate checking is the responsibility of the repository.
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         student = Student(student_id, name)
         self.student_repo.add(student)
         return self._student_response_from_domain(student)
