@@ -53,6 +53,7 @@ class StudentManagementSystem:
         self.teacher_repo = teacher_repo
         self.course_repo = course_repo
 
+
     # ------------------------------------------------------------------
     # Internal helpers — domain entity access (PRIVATE)
     # ------------------------------------------------------------------
@@ -60,11 +61,14 @@ class StudentManagementSystem:
     def _get_student_entity(self, student_id: str) -> Student:
         return self.student_repo.get(student_id)
 
+
     def _get_teacher_entity(self, teacher_id: str) -> Teacher:
         return self.teacher_repo.get(teacher_id)
 
+
     def _get_course_entity(self, course_code: str) -> Course:
         return self.course_repo.get(course_code)
+
 
     # ------------------------------------------------------------------
     # Internal helpers — Domain → DTO → Response (PRIVATE)
@@ -98,6 +102,7 @@ class StudentManagementSystem:
             teacher_id=dto.teacher_id,
             student_ids=list(dto.student_ids),
         )
+
 
     # ------------------------------------------------------------------
     # Create / Read (PUBLIC — return Response Models)
@@ -149,6 +154,7 @@ class StudentManagementSystem:
         self.student_repo.add(student)
         return self._student_response_from_domain(student)
 
+
     def add_teacher(self, teacher_id: str, name: str) -> TeacherResponse:
         """
         Create a new Teacher and persist it via the TeacherRepository.
@@ -193,6 +199,7 @@ class StudentManagementSystem:
         teacher = Teacher(teacher_id, name)
         self.teacher_repo.add(teacher)
         return self._teacher_response_from_domain(teacher)
+
 
     def add_course(self, course_code: str, name: str) -> CourseResponse:
         """
@@ -240,13 +247,14 @@ class StudentManagementSystem:
         self.course_repo.add(course)
         return self._course_response_from_domain(course)
 
+
     def get_student(self, student_id: str) -> StudentResponse:
         """
         Retrieve an existing Student by ID as an immutable snapshot.
         """
 
         # ------------------------------------------------------------
-        # student_id validation
+        # identifier validation
         # ------------------------------------------------------------
 
         if student_id is None:
@@ -266,10 +274,30 @@ class StudentManagementSystem:
         student = self._get_student_entity(student_id)
         return self._student_response_from_domain(student)
 
+
     def get_teacher(self, teacher_id: str) -> TeacherResponse:
         """
         Retrieve an existing Teacher by ID as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # identifier validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            raise InvalidIdentifierError(field="teacher_id")
+
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = self._get_teacher_entity(teacher_id)
         return self._teacher_response_from_domain(teacher)
 
