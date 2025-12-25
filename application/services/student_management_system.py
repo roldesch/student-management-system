@@ -244,6 +244,25 @@ class StudentManagementSystem:
         """
         Retrieve an existing Student by ID as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            raise InvalidIdentifierError(field="student_id")
+
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         return self._student_response_from_domain(student)
 
