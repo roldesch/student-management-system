@@ -447,7 +447,7 @@ class StudentManagementSystem:
             raise InvalidIdentifierError(field="course_code")
 
         # ------------------------------------------------------------
-        # # domain orchestration (NO validation below)
+        # domain orchestration (NO validation below)
         # ------------------------------------------------------------
 
         teacher = self._get_teacher_entity(teacher_id)
@@ -458,8 +458,27 @@ class StudentManagementSystem:
         """
         Unassign the teacher from a course (if assigned).
         """
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         course = self._get_course_entity(course_code)
         course.unassign_teacher()
+
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
         """
