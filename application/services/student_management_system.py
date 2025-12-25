@@ -305,6 +305,24 @@ class StudentManagementSystem:
         """
         Retrieve an existing Course by code as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # identifier validation
+        # ------------------------------------------------------------
+
+        if code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         course = self._get_course_entity(code)
         return self._course_response_from_domain(course)
 
