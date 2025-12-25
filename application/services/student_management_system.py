@@ -509,6 +509,38 @@ class StudentManagementSystem:
 
         Guarantees bidirectional cleanup via Course.drop.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         course.drop(student)
