@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 from typing import Optional
 
 from domain.models.student import Student
@@ -18,6 +20,14 @@ from application.mappers.course_mapper import CourseMapper
 from application.responses.student_response import StudentResponse
 from application.responses.teacher_response import TeacherResponse
 from application.responses.course_response import CourseResponse
+
+from application.validation.errors import (
+    MissingFieldError,
+    EmptyValueError,
+    InvalidTypeError,
+    InvalidIdentifierError,
+    InvalidValueError,
+)
 
 
 class StudentManagementSystem:
@@ -46,6 +56,7 @@ class StudentManagementSystem:
         self.teacher_repo = teacher_repo
         self.course_repo = course_repo
 
+
     # ------------------------------------------------------------------
     # Internal helpers — domain entity access (PRIVATE)
     # ------------------------------------------------------------------
@@ -53,11 +64,14 @@ class StudentManagementSystem:
     def _get_student_entity(self, student_id: str) -> Student:
         return self.student_repo.get(student_id)
 
+
     def _get_teacher_entity(self, teacher_id: str) -> Teacher:
         return self.teacher_repo.get(teacher_id)
 
+
     def _get_course_entity(self, course_code: str) -> Course:
         return self.course_repo.get(course_code)
+
 
     # ------------------------------------------------------------------
     # Internal helpers — Domain → DTO → Response (PRIVATE)
@@ -92,6 +106,7 @@ class StudentManagementSystem:
             student_ids=list(dto.student_ids),
         )
 
+
     # ------------------------------------------------------------------
     # Create / Read (PUBLIC — return Response Models)
     # ------------------------------------------------------------------
@@ -100,39 +115,192 @@ class StudentManagementSystem:
         """
         Create a new Student and persist it via the StudentRepository.
 
-        Duplicate checking is the responsibility of the repository.
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         student = Student(student_id, name)
         self.student_repo.add(student)
         return self._student_response_from_domain(student)
 
+
     def add_teacher(self, teacher_id: str, name: str) -> TeacherResponse:
         """
         Create a new Teacher and persist it via the TeacherRepository.
+
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # teacher_id validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            raise InvalidIdentifierError(field="teacher_id")
+
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = Teacher(teacher_id, name)
         self.teacher_repo.add(teacher)
         return self._teacher_response_from_domain(teacher)
 
+
     def add_course(self, course_code: str, name: str) -> CourseResponse:
         """
         Create a new Course (aggregate root) and persist it via the CourseRepository.
+
+        Application-level validation:
+            - Validates input shape and semantics
+            - Raises structured validation errors
+            - Performs no side effects on failure
         """
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+
+        # ------------------------------------------------------------
+        # name validation
+        # ------------------------------------------------------------
+
+        if name is None:
+            raise MissingFieldError(field="name")
+
+        if not isinstance(name, str):
+            raise InvalidTypeError(field="name")
+
+        if not name.strip():
+            raise EmptyValueError(field="name")
+        
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         course = Course(course_code, name)
         self.course_repo.add(course)
         return self._course_response_from_domain(course)
+
 
     def get_student(self, student_id: str) -> StudentResponse:
         """
         Retrieve an existing Student by ID as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # identifier validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            raise InvalidIdentifierError(field="student_id")
+
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         return self._student_response_from_domain(student)
+
 
     def get_teacher(self, teacher_id: str) -> TeacherResponse:
         """
         Retrieve an existing Teacher by ID as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # identifier validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            raise InvalidIdentifierError(field="teacher_id")
+
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = self._get_teacher_entity(teacher_id)
         return self._teacher_response_from_domain(teacher)
 
@@ -140,6 +308,24 @@ class StudentManagementSystem:
         """
         Retrieve an existing Course by code as an immutable snapshot.
         """
+
+        # ------------------------------------------------------------
+        # identifier validation
+        # ------------------------------------------------------------
+
+        if code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # repository access (NO validation below)
+        # ------------------------------------------------------------
+
         course = self._get_course_entity(code)
         return self._course_response_from_domain(course)
 
@@ -182,6 +368,25 @@ class StudentManagementSystem:
 
         Relationship cleanup is done through the Course aggregate.
         """
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         course = self._get_course_entity(course_code)
 
         # Unassign teacher if present
@@ -202,6 +407,25 @@ class StudentManagementSystem:
         Cleanup rules:
         - Drop the student from all courses they are enrolled in.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
 
         # Drop this student from all their courses via Course (aggregate root)
@@ -217,6 +441,25 @@ class StudentManagementSystem:
         Cleanup rules:
         - Unassign the teacher from all courses where they are assigned.
         """
+
+        # ------------------------------------------------------------
+        # teacher_id validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="teacher_id")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = self._get_teacher_entity(teacher_id)
 
         # Unassign from all courses where this teacher is assigned
@@ -236,6 +479,37 @@ class StudentManagementSystem:
 
         Invariants are enforced by the Course aggregate.
         """
+
+        # ------------------------------------------------------------
+        # teacher_id validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            raise InvalidIdentifierError(field="teacher_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = self._get_teacher_entity(teacher_id)
         course = self._get_course_entity(course_code)
         course.assign_teacher(teacher)
@@ -244,8 +518,27 @@ class StudentManagementSystem:
         """
         Unassign the teacher from a course (if assigned).
         """
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         course = self._get_course_entity(course_code)
         course.unassign_teacher()
+
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
         """
@@ -253,6 +546,38 @@ class StudentManagementSystem:
 
         Enrollment rules are enforced by the Course aggregate.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         course.enroll(student)
@@ -263,6 +588,38 @@ class StudentManagementSystem:
 
         Guarantees bidirectional cleanup via Course.drop.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         course.drop(student)
@@ -279,6 +636,52 @@ class StudentManagementSystem:
 
         Invariants are enforced by Student.assign_grade:
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # value validation
+        # ------------------------------------------------------------
+
+        if value is None:
+            raise MissingFieldError(field="value")
+
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise InvalidTypeError(field="value")
+
+        if not math.isfinite(value):
+            raise InvalidValueError(field="value")
+
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         student.assign_grade(course, value)
@@ -289,6 +692,38 @@ class StudentManagementSystem:
         """
         Remove a grade from a student for a given course.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         student.remove_grade(course)
@@ -301,6 +736,38 @@ class StudentManagementSystem:
 
         This method returns a primitive and is therefore boundary-safe.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         return student.get_grade(course)
