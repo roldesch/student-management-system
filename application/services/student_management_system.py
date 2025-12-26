@@ -441,6 +441,25 @@ class StudentManagementSystem:
         Cleanup rules:
         - Unassign the teacher from all courses where they are assigned.
         """
+
+        # ------------------------------------------------------------
+        # teacher_id validation
+        # ------------------------------------------------------------
+
+        if teacher_id is None:
+            raise MissingFieldError(field="teacher_id")
+
+        if not isinstance(teacher_id, str):
+            raise InvalidTypeError(field="teacher_id")
+
+        if not teacher_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="teacher_id")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         teacher = self._get_teacher_entity(teacher_id)
 
         # Unassign from all courses where this teacher is assigned
