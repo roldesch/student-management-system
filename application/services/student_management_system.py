@@ -407,6 +407,25 @@ class StudentManagementSystem:
         Cleanup rules:
         - Drop the student from all courses they are enrolled in.
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # domain construction + persistence (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
 
         # Drop this student from all their courses via Course (aggregate root)
