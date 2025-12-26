@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 from typing import Optional
 
 from domain.models.student import Student
@@ -24,6 +26,7 @@ from application.validation.errors import (
     EmptyValueError,
     InvalidTypeError,
     InvalidIdentifierError,
+    InvalidValueError,
 )
 
 
@@ -576,6 +579,52 @@ class StudentManagementSystem:
 
         Invariants are enforced by Student.assign_grade:
         """
+
+        # ------------------------------------------------------------
+        # student_id validation
+        # ------------------------------------------------------------
+
+        if student_id is None:
+            raise MissingFieldError(field="student_id")
+
+        if not isinstance(student_id, str):
+            raise InvalidTypeError(field="student_id")
+
+        if not student_id.strip():
+            # Identifiers are structural, not "empty values"
+            raise InvalidIdentifierError(field="student_id")
+
+        # ------------------------------------------------------------
+        # course_code validation
+        # ------------------------------------------------------------
+
+        if course_code is None:
+            raise MissingFieldError(field="course_code")
+
+        if not isinstance(course_code, str):
+            raise InvalidTypeError(field="course_code")
+
+        if not course_code.strip():
+            raise InvalidIdentifierError(field="course_code")
+
+        # ------------------------------------------------------------
+        # value validation
+        # ------------------------------------------------------------
+
+        if value is None:
+            raise MissingFieldError(field="value")
+
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise InvalidTypeError(field="value")
+
+        if not math.isfinite(value):
+            raise InvalidValueError(field="value")
+
+
+        # ------------------------------------------------------------
+        # domain orchestration (NO validation below)
+        # ------------------------------------------------------------
+
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         student.assign_grade(course, value)
