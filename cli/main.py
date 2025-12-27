@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+from cli.rendering.errors import render_error
+
 # -------------------------------------------------
 # Exit code constants (authoritative)
 # -------------------------------------------------
@@ -225,23 +227,26 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 # -------------------------------------------------
-# Main entry point with exit-code wiring
+# Main entry point with scoped argparse handling
 # -------------------------------------------------
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
 
     try:
-        args = parser.parse_args(argv)
+        try:
+            args = parser.parse_args(argv)
+
+        except SystemExit as e:
+            # argparse exits here -> usage error
+            return EXIT_USAGE_ERROR if e.code != 0 else EXIT_SUCCESS
+
         dispatch(args)
         return EXIT_SUCCESS
 
-    except SystemExit as e:
-        # argparse exits here -> usage error
-        return EXIT_USAGE_ERROR if e.code != 0 else EXIT_SUCCESS
-
-    except Exception:
-        # Placeholder: refined error handling comes next
-        return EXIT_SYSTEM_ERROR
+    except Exception as exc:
+        exit_code, message = render_error(exc)
+        print(message)
+        return exit_code
 
 if __name__ == "__main__":
     sys.exit(main())
