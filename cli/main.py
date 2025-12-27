@@ -3,6 +3,103 @@
 import argparse
 import sys
 
+# -------------------------------------------------
+# Exit code constants (authoritative)
+# -------------------------------------------------
+EXIT_SUCCESS = 0
+EXIT_USAGE_ERROR = 1
+EXIT_VALIDATION_ERROR = 2
+EXIT_DOMAIN_ERROR = 3
+EXIT_STATE_ERROR = 4
+EXIT_SYSTEM_ERROR = 10
+
+
+# -------------------------------------------------
+# Stub command handlers (NO LOGIC)
+# -------------------------------------------------
+def handle_student_add(args): pass
+def handle_student_show(args): pass
+def handle_student_list(args): pass
+def handle_student_remove(args): pass
+
+def handle_teacher_add(args): pass
+def handle_teacher_show(args): pass
+def handle_teacher_list(args): pass
+def handle_teacher_remove(args): pass
+
+def handle_course_add(args): pass
+def handle_course_show(args): pass
+def handle_course_list(args): pass
+def handle_course_remove(args): pass
+
+def handle_enroll(args): pass
+def handle_drop(args): pass
+def handle_assign_teacher(args): pass
+def handle_unassign_teacher(args): pass
+
+def handle_grade_assign(args): pass
+def handle_grade_remove(args): pass
+
+
+# -------------------------------------------------
+# Dispatcher
+# -------------------------------------------------
+def dispatch(args) -> None:
+    """
+    Dispatch parsed arguments to the correct command handler.
+    """
+    match args.resource, getattr(args, "action", None):
+
+        case "student", "add":
+            handle_student_add(args)
+        case "student", "show":
+            handle_student_show(args)
+        case "student", "list":
+            handle_student_list(args)
+        case "student", "remove":
+            handle_student_remove(args)
+
+        case "teacher", "add":
+            handle_teacher_add(args)
+        case "teacher", "show":
+            handle_teacher_show(args)
+        case "teacher", "list":
+            handle_teacher_list(args)
+        case "teacher", "remove":
+            handle_teacher_remove(args)
+
+        case "course", "add":
+            handle_course_add(args)
+        case "course", "show":
+            handle_course_show(args)
+        case "course", "list":
+            handle_course_list(args)
+        case "course", "remove":
+            handle_course_remove(args)
+
+        case "enroll", None:
+            handle_enroll(args)
+        case "drop", None:
+            handle_drop(args)
+
+        case "assign-teacher", None:
+            handle_assign_teacher(args)
+        case "unassign-teacher", None:
+            handle_unassign_teacher(args)
+
+        case "grade", "assign":
+            handle_grade_assign(args)
+        case "grade", "remove":
+            handle_grade_remove(args)
+
+        case _:
+            # This should be unreachable if argparse is correct
+            raise RuntimeError("Unhandled command")
+
+
+# -------------------------------------------------
+# Parser builder
+# -------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
     """
@@ -127,22 +224,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# -------------------------------------------------
+# Main entry point with exit-code wiring
+# -------------------------------------------------
 def main(argv: list[str] | None = None) -> int:
-    """
-    CLI entry point.
-
-    For now, this function only parses arguments and prints the parsed
-    namespace for verification purposes.
-    """
     parser = build_parser()
-    args = parser.parse_args(argv)
 
-    # Placeholder behavior: no command dispatch yet
-    print("Parsed arguments:")
-    print(args)
+    try:
+        args = parser.parse_args(argv)
+        dispatch(args)
+        return EXIT_SUCCESS
 
-    return 0
+    except SystemExit as e:
+        # argparse exits here -> usage error
+        return EXIT_USAGE_ERROR if e.code != 0 else EXIT_SUCCESS
 
+    except Exception:
+        # Placeholder: refined error handling comes next
+        return EXIT_SYSTEM_ERROR
 
 if __name__ == "__main__":
     sys.exit(main())
