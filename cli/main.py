@@ -3,6 +3,7 @@
 import argparse
 import sys
 
+from cli.app_factory import create_sms
 from cli.rendering.errors import render_error
 
 # -------------------------------------------------
@@ -19,7 +20,21 @@ EXIT_SYSTEM_ERROR = 10
 # -------------------------------------------------
 # Stub command handlers (NO LOGIC)
 # -------------------------------------------------
-def handle_student_add(args): pass
+def handle_student_add(args):
+    """
+    Minimal CLI -> application wiring for 'student add'.
+
+    Intentionally:
+        - No output rendering
+        - No exception handling
+        - No return value usage
+    """
+    sms = create_sms()
+    sms.add_student(
+        student_id=args.id,
+        name=args.name,
+    )
+    
 def handle_student_show(args): pass
 def handle_student_list(args): pass
 def handle_student_remove(args): pass
