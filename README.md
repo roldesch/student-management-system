@@ -1,150 +1,164 @@
 # Student Management System
 
-A Python-based Student Management System (SMS) implemented using Domain-Driven Design (DDD) and Clean Architecture principles.
+A Python-based **Student Management System (SMS)** implemented using **Domain-Driven Design (DDD)** and **Clean Architecture** principles.
 
-This project simulates an academic environment involving students, teachers, courses, enrollments, and grades, with a clean separation of concerns between:
-- Domain layer (entities and business rules)
-- Application layer (use-case orchestration)
-- Infrastructure layer (repository implementations)
-- Tests (domain, integration, and system levels)
+The project models an academic environment involving students, teachers, courses, enrollments, and grades, with a strict separation of concerns between architectural layers and clearly defined boundaries between domain logic, application orchestration, and external interfaces.
 
-The architecture is fully modular and testable via dependency-injected repositories.
+This repository now represents a **stable, contract-driven system**, including a production-ready CLI.
+
+---
+
+## 🧭 Architecture Overview
+
+The system follows Clean Architecture with explicit responsibilities per layer:
+
+* **Domain Layer**
+
+  * Core entities (`Student`, `Teacher`, `Course`)
+  * Business invariants enforced via domain methods and domain-specific exceptions
+  * No dependencies on infrastructure or presentation concerns
+
+* **Application Layer**
+
+  * Orchestrates use cases through `StudentManagementSystem`
+  * Performs **application-level input validation** (shape, semantics, identifiers)
+  * Exposes **immutable Response Models** and DTO-safe data structures
+  * Prevents domain entities from crossing application boundaries
+
+* **Infrastructure Layer**
+
+  * Repository implementations (currently in-memory)
+  * Implements persistence behind repository interfaces (ports)
+
+* **Interfaces / Presentation Layer**
+
+  * Command-Line Interface (CLI)
+  * Acts as a thin adapter over the application layer
+  * No business rules, domain logic, or persistence access
 
 ---
 
 ## 🚀 Features
 
-- Create and manage students, teachers, and courses
-- Assign teachers to courses
-- Enroll students in courses
-- Assign and retrieve grades
-- Enforce domain rules through custom exceptions
-- Fully modular architecture (domain → application → infrastructure)
-- Repository-based design with dependency injection
-- In-memory repository implementations for testing and prototyping
-- Automated test suite: domain, integration, system
-- Complete Python package structure with __init__.py in all folders
+* Create and manage students, teachers, and courses
+* Assign teachers to courses
+* Enroll and drop students from courses
+* Assign and remove grades
+* Enforce business rules through domain exceptions
+* Centralized application-level validation
+* Immutable application response models
+* Repository-based design with dependency injection
+* In-memory repositories for testing and prototyping
+* Fully automated test suite across all layers
+* Production-ready, automation-safe CLI
 
 ---
 
 ## 🧱 Project Structure
 
+```
 StudentManagementSystem/
 │
-├── .github/
-│   ├── gpt/
-│   │   ├── ARCHITECTURE_RULES.md
-│   │   └── pr_review_prompt.md
-│   └── workflows/
-│       └── pr-auto-review.yml
-│
 ├── application/
-│   ├── __init__.py
-│   └── services/
-│       ├── __init__.py
-│       └── student_management_system.py
-│
-├── docs/
-│   └── testing/
-│       ├── testing_strategy.md
-│       └── tree_visualization.md
+│   ├── dtos/            # Application-level DTOs
+│   ├── mappers/         # Domain → DTO mapping
+│   ├── responses/       # Immutable response models
+│   ├── validation/      # Application-level validation errors
+│   └── services/        # StudentManagementSystem
 │
 ├── domain/
-│   ├── __init__.py
-│   ├── exceptions/
-│   │   ├── __init__.py
-│   │   └── domain_exceptions.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── course.py
-│   │   ├── student.py
-│   │   └── teacher.py
-│   └── repositories/
-│       ├── __init__.py
-│       ├── base_repository.py
-│       ├── course_repository.py
-│       ├── student_repository.py
-│       └── teacher_repository.py
+│   ├── models/          # Core domain entities
+│   ├── repositories/    # Repository interfaces (ports)
+│   └── exceptions/      # Domain rule violations
 │
 ├── infrastructure/
-│   ├── __init__.py
-│   ├── in_memory/
-│   │   ├── __init__.py
-│   │   ├── in_memory_course_repository.py
-│   │   ├── in_memory_student_repository.py
-│   │   └── in_memory_teacher_repository.py
-│   └── repositories/
-│       ├── __init__.py
-│       └── (reserved for future db-backed repos)
+│   └── in_memory/       # In-memory repository implementations
+│
+├── cli/                 # Command-Line Interface (presentation layer)
+│   ├── commands/
+│   ├── rendering/
+│   ├── app_factory.py
+│   ├── main.py
+│   └── README.md        # CLI contract documentation
 │
 ├── tests/
-│   ├── __init__.py
-│   ├── conftest.py
-│   ├── domain/
-│   │   ├── __init__.py
-│   │   └── test_course.py
-│   ├── integration/
-│   │   ├── __init__.py
-│   │   └── (future integration tests)
-│   └── system/
-│       ├── __init__.py
-│       └── test_student_management_system.py
+│   ├── domain/          # Domain unit tests
+│   ├── integration/     # Cross-layer tests
+│   ├── system/          # Application-level system tests
+│   └── cli/             # CLI snapshot and subprocess tests
 │
-├── .gitignore
-├── __init__.py
-└── README.md
-
+├── docs/
+│   └── testing/         # Testing strategy and diagrams
+│
+├── README.md
+└── .gitignore
 ```
 
-### **Folder Responsibilities**
-- application/services/
-    Application service layer responsible for orchestrating use cases.
-    Contains the core service: StudentManagementSystem.
+---
 
-- domain/models/  
-    Domain entities:
-       - Student
-       - Teacher
-       - Course
-    These classes enforce business rules and are persistence-agnostic.
+## 🖥️ Command-Line Interface (CLI)
 
-- domain/exceptions/  
-    Custom domain exceptions enforcing invariants and invalid operations:
-        EnrollmentError, TeacherAssignmentError, GradeError, etc.
+The project includes a **first-class, production-ready CLI**.
 
-- domain/repositories/  
-    Repository interfaces (ports) specifying how the application layer interacts with persistence.
+Key properties:
 
-- infrastructure/in_memory/  
-    In-memory repository implementations used for testing and prototyping.
+* Stateless: each invocation runs in a fresh process
+* Deterministic: identical inputs produce identical observable results
+* Scriptable and automation-safe
+* Exit codes are part of the public API
 
-- tests/  
-    - domain/ → Pure domain unit tests
-    - integration/ → Tests combining repositories and domain behavior
-    - system/ → Full end-to-end SMS use-case tests via the application layer
+The CLI:
 
-- .github/  
-    Automation rules, GPT architectural review materials, and CI workflows.
+* Performs syntax and type-level argument parsing
+* Delegates all semantics to the application layer
+* Renders output exclusively from immutable response models
 
-- docs/testing/  
-    Documentation for test strategy and directory visualization.
+📄 **See [`cli/README.md`](cli/README.md) for full CLI documentation**, including:
 
-- .gitignore  
-    Excludes virtual environments, IDE files, __pycache__/, test artifacts, etc.
-
-- __init__.py  
-    Makes all directories valid Python packages and allows clean import paths.
+* Command reference
+* Output model
+* Exit-code contract
+* Automation examples
 
 ---
 
-## 📝 Requirements
+## ✅ Validation Model
 
-- Python 3.10+
-- (Optional) Virtual environment (`python -m venv .venv`)
+Validation responsibilities are strictly layered:
+
+| Concern                     | Responsible Layer |
+| --------------------------- | ----------------- |
+| Argument presence / parsing | CLI               |
+| Type coercion               | CLI               |
+| Semantic input validation   | Application       |
+| Business invariants         | Domain            |
+| Existence / state checks    | Repositories      |
+
+This prevents duplication, leakage, and inconsistent error handling.
 
 ---
 
-## ▶️ Running the System
+## 🧪 Testing Strategy
+
+The project uses a layered testing approach:
+
+* **Domain Tests** (`tests/domain`)
+  Verify entity behavior, invariants, and domain exceptions.
+
+* **Application / System Tests** (`tests/system`)
+  Validate complete use-case flows via the application service.
+
+* **CLI Snapshot Tests**
+  Lock output formatting of printers.
+
+* **CLI Subprocess Tests**
+  Validate real CLI behavior, exit codes, and error mapping.
+
+Together, these tests guarantee correctness across all architectural boundaries.
+
+---
+
+## ▶️ Running the Project
 
 Clone the repository:
 
@@ -153,74 +167,22 @@ git clone https://github.com/roldesch/student-management-system.git
 cd student-management-system
 ```
 
-Run the test suite:
+Run the full test suite:
 
+```bash
 pytest
-
-Run specific layers:
-
-pytest tests/domain
-pytest tests/integration
-pytest tests/system
-
-Example: Instantiating the SMS with in-memory repositories
-
-from StudentManagementSystem.application.services import StudentManagementSystem
-from StudentManagementSystem.infrastructure.in_memory import (
-    InMemoryStudentRepository,
-    InMemoryTeacherRepository,
-    InMemoryCourseRepository,
-)
-
-sms = StudentManagementSystem(
-    student_repo=InMemoryStudentRepository(),
-    teacher_repo=InMemoryTeacherRepository(),
-    course_repo=InMemoryCourseRepository(),
-)
-
+```
 
 ---
 
-## 🧪 Testing
+## 🔮 Future Enhancements
 
-The project uses a layered automated test strategy:
+* Database-backed repositories (SQL / NoSQL)
+* REST API layer (FastAPI) reusing the same application services
+* JSON output mode for CLI
+* Alternative presentation layers (GUI, TUI)
 
-- Domain Tests (tests/domain) → Verify entity behavior, invariants, and domain exceptions. 
-- Integration Tests (tests/integration) → Validate interactions between repositories and domain logic.
-- System Tests (tests/system) → Validate complete SMS use-case flows, including:
-- Entity creation
-- Teacher assignment
-- Student enrollment
-- Grade assignment and retrieval
-- Relationship cleanup
-- The test suite uses dependency injection fixtures via `conftest.py`.
-
-The root conftest.py provides dependency-injected repository fixtures.
-
-All test folders include an __init__.py for proper import resolution.
-
----
-
-## 🧩 Domain Model Overview
-
-The domain layer is the heart of the system:
-- Entities manage their own state and enforce invariants
-- Domain exceptions prevent invalid operations
-- Domain logic is independent of infrastructure concerns
-- Repositories abstract persistence behind interfaces
-
-This ensures high modularity and easy extensibility.  
-
----
-
-## 📚 Future Enhancements
-
-- Add SQL/NoSQL database-backed repositories
-- Introduce a REST API layer (FastAPI)
-- Add a CLI frontend
-- Implement asynchronous repository variants
-- Expand analytics and reporting
-- Automated architectural validation in CI
+All future interfaces will reuse the existing application and domain layers.
 
 ---
 
