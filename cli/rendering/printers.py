@@ -13,7 +13,7 @@ from application.responses.course_response import CourseResponse
 
 def print_student(student: StudentResponse) -> None:
     print("Student")
-    print("--------")
+    print("------")
     print(f"ID: {student.student_id}")
     print(f"Name: {student.name}")
     print()
@@ -29,14 +29,14 @@ def print_student(student: StudentResponse) -> None:
     print("Grades:")
     if student.grades:
         for course_code in sorted(student.grades):
-            print(f" {course_code}:  {student.grades[course_code]}")
+            print(f"  {course_code}: {student.grades[course_code]}")
     else:
         print("  (none)")
 
 
 def print_teacher(teacher: TeacherResponse) -> None:
     print("Teacher")
-    print("--------")
+    print("------")
     print(f"ID: {teacher.teacher_id}")
     print(f"Name: {teacher.name}")
     print()
@@ -51,7 +51,7 @@ def print_teacher(teacher: TeacherResponse) -> None:
 
 def print_course(course: CourseResponse) -> None:
     print("Course")
-    print("-------")
+    print("------")
     print(f"Code: {course.course_code}")
     print(f"Name: {course.name}")
 
@@ -73,7 +73,7 @@ def print_course(course: CourseResponse) -> None:
 
 def print_students(students: Iterable[StudentResponse]) -> None:
     print("Students")
-    print("------")
+    print("--------")
 
     students = list(students)
     if not students:
@@ -86,7 +86,7 @@ def print_students(students: Iterable[StudentResponse]) -> None:
 
 def print_teachers(teachers: Iterable[TeacherResponse]) -> None:
     print("Teachers")
-    print("------")
+    print("--------")
 
     teachers = list(teachers)
     if not teachers:
@@ -99,7 +99,7 @@ def print_teachers(teachers: Iterable[TeacherResponse]) -> None:
 
 def print_courses(courses: Iterable[CourseResponse]) -> None:
     print("Courses")
-    print("------")
+    print("-------")
 
     courses = list(courses)
     if not courses:
@@ -109,9 +109,3 @@ def print_courses(courses: Iterable[CourseResponse]) -> None:
     for course in sorted(courses, key=lambda c: c.course_code):
         teacher = course.teacher_id if course.teacher_id is not None else "(unassigned)"
         print(f"{course.course_code}  {course.name}  Teacher: {teacher}")
-
-
-
-
-
-
