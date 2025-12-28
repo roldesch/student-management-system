@@ -6,6 +6,15 @@ import sys
 from cli.app_factory import create_sms
 from cli.rendering.errors import render_error
 
+from cli.rendering.printers import (
+    print_student,
+    print_students,
+    print_teacher,
+    print_teachers,
+    print_course,
+    print_courses,
+)
+
 # -------------------------------------------------
 # Exit code constants (authoritative)
 # -------------------------------------------------
@@ -18,44 +27,154 @@ EXIT_SYSTEM_ERROR = 10
 
 
 # -------------------------------------------------
-# Stub command handlers (NO LOGIC)
+# Command handlers
+# -------------------------------------------------
+
+# -------------------------------------------------
+# Student commands handlers
 # -------------------------------------------------
 def handle_student_add(args):
-    """
-    Minimal CLI -> application wiring for 'student add'.
-
-    Intentionally:
-        - No output rendering
-        - No exception handling
-        - No return value usage
-    """
     sms = create_sms()
     sms.add_student(
         student_id=args.id,
         name=args.name,
     )
-    
-def handle_student_show(args): pass
-def handle_student_list(args): pass
-def handle_student_remove(args): pass
+    print("Success.")
 
-def handle_teacher_add(args): pass
-def handle_teacher_show(args): pass
-def handle_teacher_list(args): pass
-def handle_teacher_remove(args): pass
 
-def handle_course_add(args): pass
-def handle_course_show(args): pass
-def handle_course_list(args): pass
-def handle_course_remove(args): pass
+def handle_student_show(args):
+    sms = create_sms()
+    student = sms.get_student(args.student_id)
+    print_student(student)
 
-def handle_enroll(args): pass
-def handle_drop(args): pass
-def handle_assign_teacher(args): pass
-def handle_unassign_teacher(args): pass
 
-def handle_grade_assign(args): pass
-def handle_grade_remove(args): pass
+def handle_student_list(args):
+    sms = create_sms()
+    students = sms.list_students()
+    print_students(students)
+
+
+def handle_student_remove(args):
+    sms = create_sms()
+    sms.remove_student(args.student_id)
+    print("Success.")
+
+
+# -------------------------------------------------
+# Teacher commands handlers
+# -------------------------------------------------
+def handle_teacher_add(args):
+    sms = create_sms()
+    sms.add_teacher(
+        teacher_id=args.id,
+        name=args.name,
+    )
+    print("Success.")
+
+def handle_teacher_show(args):
+    sms = create_sms()
+    teacher = sms.get_teacher(args.teacher_id)
+    print_teacher(teacher)
+
+
+def handle_teacher_list(args):
+    sms = create_sms()
+    teachers = sms.list_teachers()
+    print_teachers(teachers)
+
+
+def handle_teacher_remove(args):
+    sms = create_sms()
+    sms.remove_teacher(args.teacher_id)
+    print("Success.")
+
+
+# -------------------------------------------------
+# Course commands handlers
+# -------------------------------------------------
+def handle_course_add(args):
+    sms = create_sms()
+    sms.add_course(
+        course_code=args.code,
+        name=args.name,
+    )
+    print("Success.")
+
+
+def handle_course_show(args):
+    sms = create_sms()
+    course = sms.get_course(args.course_code)
+    print_course(course)
+
+
+def handle_course_list(args):
+    sms = create_sms()
+    courses = sms.list_courses()
+    print_courses(courses)
+
+
+def handle_course_remove(args):
+    sms = create_sms()
+    sms.remove_course(args.course_code)
+    print("Success.")
+
+
+# -------------------------------------------------
+# Cross-resource commands handlers
+# -------------------------------------------------
+def handle_enroll(args):
+    sms = create_sms()
+    sms.enroll_student_in_course(
+        student_id=args.student,
+        course_code=args.course,
+    )
+    print("Success.")
+
+
+def handle_drop(args):
+    sms = create_sms()
+    sms.drop_student_from_course(
+        student_id=args.student,
+        course_code=args.course,
+    )
+    print("Success.")
+
+
+def handle_assign_teacher(args):
+    sms = create_sms()
+    sms.assign_teacher_to_course(
+        teacher_id=args.teacher,
+        course_code=args.course,
+    )
+    print("Success.")
+
+
+def handle_unassign_teacher(args):
+    sms = create_sms()
+    sms.unassign_teacher_from_course(args.course_code)
+    print("Success.")
+
+
+# -------------------------------------------------
+# Grade commands handlers
+# -------------------------------------------------
+def handle_grade_assign(args):
+    sms = create_sms()
+    sms.assign_grade_to_student(
+        student_id=args.student,
+        course_code=args.course,
+        value=args.value,
+    )
+    print("Success.")
+
+
+def handle_grade_remove(args):
+    sms = create_sms()
+    sms.remove_grade_from_student(
+        student_id=args.student,
+        course_code=args.course,
+    )
+    print("Success.")
 
 
 # -------------------------------------------------
@@ -265,3 +384,6 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+
