@@ -3,6 +3,8 @@
 import subprocess
 import sys
 
+from tests.cli.subprocess.test_cli_student_commands import run_cli
+
 
 def test_cli_usage_error_missing_required_arguments():
     """
@@ -30,3 +32,12 @@ def test_cli_usage_error_missing_required_arguments():
     # argparse should emit usage/help text
     combined_output = (result.stdout + result.stderr).lower()
     assert "usage" in combined_output or "required" in combined_output
+
+def test_student_add_missing_arguments():
+    result = run_cli("student", "add")
+
+    assert result.returncode == 1
+
+    combined = (result.stdout + result.stderr).lower()
+    assert "usage" in combined or "required" in combined
+    
