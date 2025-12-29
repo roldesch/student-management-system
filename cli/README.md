@@ -170,6 +170,51 @@ From this point forward:
 
 ---
 
+## CLI v1 Stability Guarantee
+
+The Student Management System (SMS) command-line interface is versioned
+and governed under a stable **CLI v1 contract** starting from version
+**1.0.0**.
+
+### Stability Guarantees
+
+For all releases within the **1.x.y** series, the following guarantees
+apply:
+
+- Command names and hierarchical structure are stable.
+- Required and optional flags retain their meaning.
+- Exit code semantics are stable and deterministic.
+- Error categorization (validation, domain, system/state) is stable.
+- Output semantics are stable at the meaning level (field intent and
+  classification), even if formatting evolves.
+
+### Breaking Changes
+
+Any of the following constitute a **breaking change** and require a
+major version bump:
+
+- Renaming or removing commands or subcommands
+- Changing the meaning of existing flags or arguments
+- Changing exit code meanings
+- Reclassifying errors across categories
+- Altering the semantic meaning of output fields
+- Allowing domain entities to escape the application boundary
+
+### Non-Breaking Changes
+
+The following are considered backward-compatible:
+
+- Adding new commands or subcommands
+- Adding new optional flags
+- Introducing new infrastructure backends (e.g. persistence)
+- Performance improvements
+- Internal refactors that preserve observable behavior
+
+This contract exists to ensure that users and scripts can rely on SMS
+behavior across releases without unexpected breakage.
+
+---
+
 ## License
 
 Internal project documentation.
