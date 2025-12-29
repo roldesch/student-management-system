@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+from cli.version import SMS_VERSION
+
 from cli.app_factory import create_sms
 from cli.rendering.errors import render_error
 
@@ -247,6 +249,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sms",
         description="Student Management System CLI",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"sms {SMS_VERSION}",
     )
 
     subparsers = parser.add_subparsers(
