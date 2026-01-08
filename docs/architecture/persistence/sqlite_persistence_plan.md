@@ -77,6 +77,7 @@ The **UnitOfWork** is the *only* component allowed to:
 * Open and close SQLite connections
 * Start, commit, and roll back transactions
 * Enforce one-transaction-per-use-case semantics
+* Select the **transaction start mode** (read vs write)
 
 ### Rules
 
@@ -84,8 +85,14 @@ The **UnitOfWork** is the *only* component allowed to:
 * Repositories **assume** an active transaction
 * Repositories must **never** call BEGIN / COMMIT / ROLLBACK
 * **Repositories must not open or close database connections**
+* **Repositories must never choose or influence the transaction mode**
 * Connections and cursors are treated as externally owned and opaque
 * No nested transactions (SQLite limitation)
+
+Transaction start semantics (SQLite-specific, locked):
+
+* Read-only UnitOfWork → `BEGIN` (deferred)
+* Write UnitOfWork → `BEGIN IMMEDIATE`
 
 The Application layer remains **transaction-agnostic**.
 
@@ -165,6 +172,7 @@ Row mappers are **intentionally limited**.
 * Calling domain methods
 * Encoding business logic
 * Creating partial aggregates
+* Returning data structures shaped to be directly fed into aggregate constructors
 
 Example:
 
@@ -207,10 +215,34 @@ SQLite errors must **never** leak beyond the infrastructure layer.
 
 * **Repository implementations only**
 
+### Canonical Error Taxonomy
+
+Repositories must translate low-level SQLite failures into a **stable, minimal exception set**:
+
+* `DuplicateEntityError` — UNIQUE constraint violation on insert
+* `EntityNotFoundError` — missing row during `get()` or `remove()` of a known identifier
+* `ConcurrentUpdateError` — database locked / busy timeout exceeded
+* `PersistenceError` — unexpected or unclassified persistence failure
+
+### Clarification: `EntityNotFoundError`
+
+`EntityNotFoundError` applies **only** when:
+
+* A repository is asked to retrieve or remove an entity by identifier, and
+* The identifier is structurally valid, but
+* No corresponding row exists in persistence
+
+It must **not** be used for:
+
+* Application-level validation failures
+* Domain invariant violations
+* Cross-entity or relational errors
+
 ### Examples
 
 * `sqlite3.IntegrityError (UNIQUE)` → `DuplicateEntityError`
-* `sqlite3.IntegrityError (FK)` → domain/state error
+* `sqlite3.IntegrityError (FK)` → persistence/state error (never domain)
+* `OperationalError: database is locked` → `ConcurrentUpdateError`
 
 Never translate errors in:
 
@@ -258,6 +290,26 @@ If tests fail, the persistence layer is incorrect — not the tests.
 * SQLite repositories injected
 
 No CLI logic changes required.
+
+---
+
+## 11. SQLite Operational Constraints (Locked)
+
+The following constraints are **authoritative** for all SQLite usage in this system:
+
+* `PRAGMA journal_mode = WAL;` must be executed for the database
+
+  * This operation is **idempotent** and **database-wide**
+  * It is safe to execute on each connection
+* `PRAGMA foreign_keys = ON;` must be executed for every connection
+* `PRAGMA busy_timeout = <configured ms>;` must be executed for every connection
+* Exactly **one SQLite connection per UnitOfWork**
+* No connection pooling
+* No shared or global connections
+* No cross-thread connection sharing
+* No long-running UnitOfWork instances
+
+These rules exist to prevent corruption, deadlocks, and undefined concurrency behavior.
 
 ---
 
