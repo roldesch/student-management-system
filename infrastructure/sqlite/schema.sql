@@ -1,4 +1,3 @@
--- infrastructure/sqlite/schema.sql
 -- ============================================================
 -- Student Management System — Reference Relational Schema
 -- ============================================================
@@ -20,7 +19,7 @@
 -- Identity: student_id
 -- ------------------------------------------------------------
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS students (
     student_id VARCHAR(64) PRIMARY KEY,
     name       VARCHAR(255) NOT NULL
 );
@@ -33,7 +32,7 @@ CREATE TABLE students (
 -- Identity: teacher_id
 -- ------------------------------------------------------------
 
-CREATE TABLE teachers (
+CREATE TABLE IF NOT EXISTS teachers (
     teacher_id VARCHAR(64) PRIMARY KEY,
     name       VARCHAR(255) NOT NULL
 );
@@ -47,7 +46,7 @@ CREATE TABLE teachers (
 -- Teacher assignment is owned by Course
 -- ------------------------------------------------------------
 
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
     course_code VARCHAR(64) PRIMARY KEY,
     name         VARCHAR(255) NOT NULL,
 
@@ -69,7 +68,7 @@ CREATE TABLE courses (
 -- Also owns Grade (embedded attribute)
 -- ------------------------------------------------------------
 
-CREATE TABLE enrollments (
+CREATE TABLE IF NOT EXISTS enrollments (
     course_code VARCHAR(64) NOT NULL,
     student_id  VARCHAR(64) NOT NULL,
 
@@ -104,13 +103,13 @@ CREATE TABLE enrollments (
 -- Indexes MUST NOT encode business meaning.
 -- ------------------------------------------------------------
 
-CREATE INDEX idx_courses_teacher
+CREATE INDEX IF NOT EXISTS idx_courses_teacher
     ON courses (teacher_id);
 
-CREATE INDEX idx_enrollments_student
+CREATE INDEX IF NOT EXISTS idx_enrollments_student
     ON enrollments (student_id);
 
-CREATE INDEX idx_enrollments_course
+CREATE INDEX IF NOT EXISTS idx_enrollments_course
     ON enrollments (course_code);
 
 
@@ -127,4 +126,3 @@ CREATE INDEX idx_enrollments_course
 --
 -- All business behavior is enforced in the domain layer.
 -- ------------------------------------------------------------
-
