@@ -7,6 +7,12 @@ from typing import Iterable
 
 from domain.models.student import Student
 from domain.repositories.student_repository import StudentRepository
+from infrastructure.sqlite.errors import (
+    DuplicateEntityError,
+    EntityNotFoundError,
+    PersistenceError,
+)
+from infrastructure.sqlite.row_mappers.student_rows import student_row_to_primitives
 
 
 class SQLiteStudentRepository(StudentRepository):
@@ -30,13 +36,83 @@ class SQLiteStudentRepository(StudentRepository):
         self._connection = connection
 
     def add(self, student: Student) -> None:
-        raise NotImplementedError
+        try:
+            self._connection.execute(
+                """
+                INSERT INTO students (student_id, name)
+                VALUES (?, ?)
+                """,
+                (student.id, student.name),
+            )
+        except sqlite3.IntegrityError as exc:
+            # Duplicate primary key (student_id)
+            raise DuplicateEntityError(str(exc)) from exc
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
+
 
     def get(self, student_id: str) -> Student:
-        raise NotImplementedError
+        try:
+            cursor = self._connection.execute(
+                """
+                SELECT
+                   s.student_id AS student_id,
+                   s.name As student_name
+                FROM students s
+                WHERE s.student_id = ?
+                """,
+                (student_id,),
+            )
+            row = cursor.fetchone()
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
+
+        if row is None:
+            raise EntityNotFoundError(f"Student not found: {student_id}")
+
+        primitives = student_row_to_primitives(row)
+
+        return Student(
+            student_id=primitives["student_id"],
+            name=primitives["student_name"],
+        )
+
 
     def remove(self, student_id: str) -> None:
-        raise NotImplementedError
+        try:
+            cursor = self._connection.execute(
+                """
+                DELETE FROM students
+                WHERE student_id = ?
+                """,
+                (student_id,),
+            )
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
+
+        if cursor.rowcount == 0:
+            raise EntityNotFoundError(f"Student not found: {student_id}")
+
 
     def list_all(self) -> Iterable[Student]:
-        raise NotImplementedError
+        try:
+            cursor = self._connection.execute(
+                """
+                SELECT
+                    s.student_id AS student_id,
+                    s.name AS student_name
+                FROM students s
+                ORDER BY s.student_id
+                """,
+            )
+            rows = cursor.fetchall()
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
+
+        for row in rows:
+            primitives = student_row_to_primitives(row)
+            yield Student(
+                student_id=primitives["student_id"],
+                name=primitives["student_name"],
+            )
+
