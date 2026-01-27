@@ -72,13 +72,16 @@ class _MemoryRepositoryScope:
     lifecycle shape as SQLite: tests always operate within an explicit scope.
     """
 
-    def __init__(self) -> None:
-        self.students = InMemoryStudentRepository()
-        self.teachers = InMemoryTeacherRepository()
-        self.courses = InMemoryCourseRepository(
-            students=self.students,
-            teachers=self.teachers,
-        )
+    def __init__(
+            self,
+            *,
+            students:InMemoryStudentRepository,
+            teachers: InMemoryTeacherRepository,
+            courses: InMemoryCourseRepository,
+    ) -> None:
+        self.students = students
+        self.teachers = teachers
+        self.courses = courses
 
     def __enter__(self) -> "_MemoryRepositoryScope":
         return self
@@ -150,9 +153,17 @@ def repository_harness(
     kind: RepositoryKind = request.param # type: ignore[assignment]
 
     if kind == "memory":
+        students = InMemoryStudentRepository()
+        teachers = InMemoryTeacherRepository()
+        courses = InMemoryCourseRepository()
+
         return RepositoryHarness(
             kind="memory",
-            new_scope=lambda : _MemoryRepositoryScope(),
+            new_scope=lambda : _MemoryRepositoryScope(
+                students=students,
+                teachers=teachers,
+                courses=courses
+            ),
         )
 
     db_path = tmp_path / "sms_contract_test.sqlite3"
