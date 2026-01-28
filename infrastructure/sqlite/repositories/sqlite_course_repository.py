@@ -102,7 +102,7 @@ class SQLiteCourseRepository(CourseRepository):
                 SELECT
                     c.course_code AS course_code,
                     c.name AS course_name,
-                    c.teacher_id AS teacher_id
+                    c.teacher_id AS course_teacher_id
                 FROM courses c
                 WHERE c.course_code = ?
                 """,
@@ -124,7 +124,7 @@ class SQLiteCourseRepository(CourseRepository):
         )
 
         # 2) Restore teacher (optional)
-        teacher_id = course_primitives["teacher_id"]
+        teacher_id = course_primitives["course_teacher_id"]
         if teacher_id is not None:
             try:
                 cursor = self._connection.execute(
@@ -184,9 +184,10 @@ class SQLiteCourseRepository(CourseRepository):
 
             course.enroll(student)
 
-            if primitives["grade"] is not None:
-                # Grade restoration per revised contract (Student-owned)
-                student.assign_grade(course, primitives["grade"])
+            # Grade is enrollment-owned state, not student-owned primitives
+            grade = row["grade"]
+            if grade is not None:
+                student.assign_grade(course, grade)
 
         return course
 
