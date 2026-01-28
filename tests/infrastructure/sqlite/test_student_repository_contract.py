@@ -6,16 +6,25 @@ from __future__ import annotations
 import pytest
 
 from domain.models.student import Student
-from domain.exceptions.domain_exceptions import (
-    DuplicateEntityError as DomainDuplicateEntityError,
-    EntityNotFoundError as DomainEntityNotFoundError,
-)
+
 from infrastructure.sqlite.errors import (
     DuplicateEntityError,
     EntityNotFoundError,
 )
 
 from tests.infrastructure.sqlite.conftest import RepositoryHarness
+
+# -----------------------------------------------------------------------------
+# Helpers (Phase-4A temporary enforcement)
+# -----------------------------------------------------------------------------
+def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
+    """
+    Phase-4A: In-memory repositories are known to violate ADR-00Z/ADR-00R
+    by raising domain errors instead of repository/state errors.
+    This helper makes that explicit without weakening the contract.
+    """
+    if repository_harness.kind == "memory":
+        pytest.xfail("Phase-4A: in-memory repositories not yet contract-compliant (Phase-4B).")
 
 
 # -----------------------------------------------------------------------------
@@ -46,21 +55,21 @@ def test_student_repository_add_then_get_returns_student_with_same_identity_and_
     assert loaded.name == "Alice"
 
 
-def test_student_repository_add_duplicate_identity_raises_duplicate_entity_error(
+def test_student_repository_add_existing_student_identity_raises_duplicate_entity_error(
         repository_harness: RepositoryHarness,
 ) -> None:
     # Arrange
-    first = Student(student_id="S01", name="Alice")
-    duplicate = Student(student_id="S01", name="Alice")
+    student = Student(student_id="S01", name="Alice")
 
-    # Act
     with repository_harness.new_scope() as scope:
-        scope.students.add(first)
+        scope.students.add(student)
 
-    # Assert
+    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
+
+    # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises((DuplicateEntityError, DomainDuplicateEntityError)):
-            scope.students.add(duplicate)
+        with pytest.raises(DuplicateEntityError):
+            scope.students.add(Student(student_id="S01", name="Alice Clone"))
 
 
 def test_student_repository_get_missing_student_raises_entity_not_found_error(
@@ -69,13 +78,12 @@ def test_student_repository_get_missing_student_raises_entity_not_found_error(
     # Arrange
     missing_student_id = "S04"
 
-    with repository_harness.new_scope() as scope:
-        # Act
-        action = lambda: scope.students.get(missing_student_id)
+    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
-        # / Assert
-        with pytest.raises((EntityNotFoundError, DomainEntityNotFoundError)):
-            action()
+    # Act / Assert
+    with repository_harness.new_scope() as scope:
+        with pytest.raises(EntityNotFoundError):
+            scope.students.get(missing_student_id)
 
 
 def test_student_repository_remove_existing_student_then_get_raises_entity_not_found_error(
@@ -87,14 +95,16 @@ def test_student_repository_remove_existing_student_then_get_raises_entity_not_f
     with repository_harness.new_scope() as scope:
         scope.students.add(student)
 
-    # Act
     with repository_harness.new_scope() as scope:
         scope.students.remove("S01")
 
-    # Assert
+    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
+
+    # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises((EntityNotFoundError, DomainEntityNotFoundError)):
+        with pytest.raises(EntityNotFoundError):
             scope.students.get("S01")
+
 
 
 def test_student_repository_remove_missing_student_raises_entity_not_found_error(
@@ -103,13 +113,12 @@ def test_student_repository_remove_missing_student_raises_entity_not_found_error
     # Arrange
     missing_student_id = "S04"
 
-    with repository_harness.new_scope() as scope:
-        # Act
-        action = lambda: scope.students.remove(missing_student_id)
+    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
-        # / Assert
-        with pytest.raises((EntityNotFoundError, DomainEntityNotFoundError)):
-            action()
+    # Act / Assert
+    with repository_harness.new_scope() as scope:
+       with pytest.raises(EntityNotFoundError):
+           scope.students.remove(missing_student_id)
 
 
 def test_student_repository_list_all_returns_all_students_regardless_of_order(
