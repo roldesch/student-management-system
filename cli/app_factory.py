@@ -1,9 +1,26 @@
 # cli/app_factory.py
 
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal
+
 from application.services.student_management_system import StudentManagementSystem
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
+
+@dataclass(frozen=True, slots=True)
+class PersistenceConfig:
+    """
+    Persistence selection configuration.
+
+    This config is owned by the composition root and must not cross.
+    into application or infrastructure layers.
+
+    It answers one question only: which persistence backend is selected?
+    """
+    backend: Literal["memory", "sqlite"] = "memory"
+    sqlite_path: Path | None = None
 
 
 def _build_in_memory_sms() -> StudentManagementSystem:
