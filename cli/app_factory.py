@@ -6,11 +6,12 @@ from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeache
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
 
 
-def create_sms() -> StudentManagementSystem:
+def _build_in_memory_sms() -> StudentManagementSystem:
     """
-    CLI composition root.
+    Build the canonical in-memory StudentManagementSystem.
 
-    Wires repositories to the application service.
+    This functions preserves the pre-Phase-5 object graph exactly and
+    must remain behaviorally identical across Phase-5.
     """
     student_repo = InMemoryStudentRepository()
     teacher_repo = InMemoryTeacherRepository()
@@ -21,3 +22,12 @@ def create_sms() -> StudentManagementSystem:
         teacher_repo=teacher_repo,
         course_repo=course_repo,
     )
+
+def create_sms() -> StudentManagementSystem:
+    """
+    CLI composition root.
+
+    Returns the canonical in-memory StudentManagementSystem.
+    """
+    return _build_in_memory_sms()
+
