@@ -2,12 +2,11 @@
 
 import argparse
 import sys
+from typing import TYPE_CHECKING
 
 from cli.version import SMS_VERSION
-
-from cli.app_factory import create_sms
+from cli.app_factory import create_sms, PersistenceConfig
 from cli.rendering.errors import render_error
-
 from cli.rendering.printers import (
     print_student,
     print_students,
@@ -16,6 +15,9 @@ from cli.rendering.printers import (
     print_course,
     print_courses,
 )
+
+if TYPE_CHECKING:
+    from cli.application_api import StudentManagementSystemAPI
 
 # -------------------------------------------------
 # Exit code constants (authoritative)
@@ -35,8 +37,10 @@ EXIT_SYSTEM_ERROR = 10
 # -------------------------------------------------
 # Student commands handlers
 # -------------------------------------------------
-def handle_student_add(args):
-    sms = create_sms()
+def handle_student_add(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.add_student(
         student_id=args.id,
         name=args.name,
@@ -44,20 +48,26 @@ def handle_student_add(args):
     print("Success.")
 
 
-def handle_student_show(args):
-    sms = create_sms()
+def handle_student_show(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     student = sms.get_student(args.student_id)
     print_student(student)
 
 
-def handle_student_list(args):
-    sms = create_sms()
+def handle_student_list(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     students = sms.list_students()
     print_students(students)
 
 
-def handle_student_remove(args):
-    sms = create_sms()
+def handle_student_remove(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.remove_student(args.student_id)
     print("Success.")
 
@@ -65,28 +75,37 @@ def handle_student_remove(args):
 # -------------------------------------------------
 # Teacher commands handlers
 # -------------------------------------------------
-def handle_teacher_add(args):
-    sms = create_sms()
+def handle_teacher_add(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.add_teacher(
         teacher_id=args.id,
         name=args.name,
     )
     print("Success.")
 
-def handle_teacher_show(args):
-    sms = create_sms()
+
+def handle_teacher_show(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     teacher = sms.get_teacher(args.teacher_id)
     print_teacher(teacher)
 
 
-def handle_teacher_list(args):
-    sms = create_sms()
+def handle_teacher_list(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     teachers = sms.list_teachers()
     print_teachers(teachers)
 
 
-def handle_teacher_remove(args):
-    sms = create_sms()
+def handle_teacher_remove(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.remove_teacher(args.teacher_id)
     print("Success.")
 
@@ -94,8 +113,10 @@ def handle_teacher_remove(args):
 # -------------------------------------------------
 # Course commands handlers
 # -------------------------------------------------
-def handle_course_add(args):
-    sms = create_sms()
+def handle_course_add(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.add_course(
         course_code=args.code,
         name=args.name,
@@ -103,20 +124,26 @@ def handle_course_add(args):
     print("Success.")
 
 
-def handle_course_show(args):
-    sms = create_sms()
+def handle_course_show(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     course = sms.get_course(args.course_code)
     print_course(course)
 
 
-def handle_course_list(args):
-    sms = create_sms()
+def handle_course_list(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     courses = sms.list_courses()
     print_courses(courses)
 
 
-def handle_course_remove(args):
-    sms = create_sms()
+def handle_course_remove(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.remove_course(args.course_code)
     print("Success.")
 
@@ -124,8 +151,10 @@ def handle_course_remove(args):
 # -------------------------------------------------
 # Cross-resource commands handlers
 # -------------------------------------------------
-def handle_enroll(args):
-    sms = create_sms()
+def handle_enroll(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.enroll_student_in_course(
         student_id=args.student,
         course_code=args.course,
@@ -133,8 +162,10 @@ def handle_enroll(args):
     print("Success.")
 
 
-def handle_drop(args):
-    sms = create_sms()
+def handle_drop(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.drop_student_from_course(
         student_id=args.student,
         course_code=args.course,
@@ -142,8 +173,10 @@ def handle_drop(args):
     print("Success.")
 
 
-def handle_assign_teacher(args):
-    sms = create_sms()
+def handle_assign_teacher(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.assign_teacher_to_course(
         teacher_id=args.teacher,
         course_code=args.course,
@@ -151,8 +184,10 @@ def handle_assign_teacher(args):
     print("Success.")
 
 
-def handle_unassign_teacher(args):
-    sms = create_sms()
+def handle_unassign_teacher(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.unassign_teacher_from_course(args.course_code)
     print("Success.")
 
@@ -160,8 +195,10 @@ def handle_unassign_teacher(args):
 # -------------------------------------------------
 # Grade commands handlers
 # -------------------------------------------------
-def handle_grade_assign(args):
-    sms = create_sms()
+def handle_grade_assign(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.assign_grade_to_student(
         student_id=args.student,
         course_code=args.course,
@@ -170,8 +207,10 @@ def handle_grade_assign(args):
     print("Success.")
 
 
-def handle_grade_remove(args):
-    sms = create_sms()
+def handle_grade_remove(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     sms.remove_grade_from_student(
         student_id=args.student,
         course_code=args.course,
@@ -182,53 +221,56 @@ def handle_grade_remove(args):
 # -------------------------------------------------
 # Dispatcher
 # -------------------------------------------------
-def dispatch(args) -> None:
+def dispatch(
+        sms: "StudentManagementSystemAPI",
+        args: argparse.Namespace,
+) -> None:
     """
     Dispatch parsed arguments to the correct command handler.
     """
     match args.resource, getattr(args, "action", None):
 
         case "student", "add":
-            handle_student_add(args)
+            handle_student_add(sms, args)
         case "student", "show":
-            handle_student_show(args)
+            handle_student_show(sms, args)
         case "student", "list":
-            handle_student_list(args)
+            handle_student_list(sms, args)
         case "student", "remove":
-            handle_student_remove(args)
+            handle_student_remove(sms, args)
 
         case "teacher", "add":
-            handle_teacher_add(args)
+            handle_teacher_add(sms, args)
         case "teacher", "show":
-            handle_teacher_show(args)
+            handle_teacher_show(sms, args)
         case "teacher", "list":
-            handle_teacher_list(args)
+            handle_teacher_list(sms, args)
         case "teacher", "remove":
-            handle_teacher_remove(args)
+            handle_teacher_remove(sms, args)
 
         case "course", "add":
-            handle_course_add(args)
+            handle_course_add(sms, args)
         case "course", "show":
-            handle_course_show(args)
+            handle_course_show(sms, args)
         case "course", "list":
-            handle_course_list(args)
+            handle_course_list(sms, args)
         case "course", "remove":
-            handle_course_remove(args)
+            handle_course_remove(sms, args)
 
         case "enroll", None:
-            handle_enroll(args)
+            handle_enroll(sms, args)
         case "drop", None:
-            handle_drop(args)
+            handle_drop(sms, args)
 
         case "assign-teacher", None:
-            handle_assign_teacher(args)
+            handle_assign_teacher(sms, args)
         case "unassign-teacher", None:
-            handle_unassign_teacher(args)
+            handle_unassign_teacher(sms, args)
 
         case "grade", "assign":
-            handle_grade_assign(args)
+            handle_grade_assign(sms, args)
         case "grade", "remove":
-            handle_grade_remove(args)
+            handle_grade_remove(sms, args)
 
         case _:
             # This should be unreachable if argparse is correct
@@ -382,7 +424,10 @@ def main(argv: list[str] | None = None) -> int:
             # argparse exits here -> usage error
             return EXIT_USAGE_ERROR if e.code != 0 else EXIT_SUCCESS
 
-        dispatch(args)
+        config = PersistenceConfig()
+        sms = create_sms(config)
+
+        dispatch(sms, args)
         return EXIT_SUCCESS
 
     except Exception as exc:
