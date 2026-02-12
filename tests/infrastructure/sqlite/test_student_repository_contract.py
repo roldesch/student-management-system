@@ -7,7 +7,7 @@ import pytest
 
 from domain.models.student import Student
 
-from infrastructure.sqlite.errors import (
+from domain.exceptions.domain_exceptions import (
     DuplicateEntityError,
     EntityNotFoundError,
 )

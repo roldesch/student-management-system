@@ -8,7 +8,7 @@ from domain.models.course import Course
 from domain.models.student import Student
 from domain.models.teacher import Teacher
 
-from infrastructure.sqlite.errors import (
+from domain.exceptions.domain_exceptions import (
     DuplicateEntityError,
     EntityNotFoundError,
 )
