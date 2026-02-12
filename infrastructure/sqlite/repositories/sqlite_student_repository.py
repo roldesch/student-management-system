@@ -7,11 +7,13 @@ from typing import Iterable
 
 from domain.models.student import Student
 from domain.repositories.student_repository import StudentRepository
-from infrastructure.sqlite.errors import (
-    DuplicateEntityError,
+
+from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
-    PersistenceError,
+    DuplicateEntityError,
 )
+from infrastructure.sqlite.errors import (PersistenceError)
+
 from infrastructure.sqlite.row_mappers.student_rows import student_row_to_primitives
 
 

@@ -18,25 +18,6 @@ class ConcurrentUpdateError(PersistenceError):
     pass
 
 
-class DuplicateEntityError(PersistenceError):
-    """
-    Raised when an insert or update violates a uniqueness constraint
-    (e.g., duplicate primary key or UNIQUE index).
-    """
-    pass
-
-
-class EntityNotFoundError(PersistenceError):
-    """
-    Raised when a repository operation expects an entity to exist,
-    but no corresponding row is found.
-
-    This applies only to persistence-layer existence checks (e.g. get/remove),
-    not to validation or domain invariant failures.
-    """
-    pass
-
-
 class ForeignKeyViolationError(PersistenceError):
     """
     Raised when a foreign key constraint is violated, indicating

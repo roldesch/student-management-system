@@ -10,11 +10,12 @@ from domain.models.student import Student
 from domain.models.teacher import Teacher
 from domain.repositories.course_repository import CourseRepository
 
-from infrastructure.sqlite.errors import (
-    DuplicateEntityError,
+from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
-    PersistenceError,
+    DuplicateEntityError,
 )
+from infrastructure.sqlite.errors import (PersistenceError)
+
 from infrastructure.sqlite.row_mappers.course_rows import course_row_to_primitives
 from infrastructure.sqlite.row_mappers.student_rows import student_row_to_primitives
 from infrastructure.sqlite.row_mappers.teacher_rows import teacher_row_to_primitives
