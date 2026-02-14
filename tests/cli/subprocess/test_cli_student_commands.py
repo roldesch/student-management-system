@@ -3,13 +3,7 @@
 import subprocess
 import sys
 
-
-def run_cli(*args):
-    return subprocess.run(
-        [sys.executable, "-m", "cli.main", *args],
-        capture_output=True,
-        text=True,
-    )
+from tests.cli.subprocess._cli_runner import run_cli
 
 
 def test_student_add_success():

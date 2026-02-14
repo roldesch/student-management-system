@@ -1,5 +1,5 @@
 # tests/cli/subprocess/test_cli_enroll_and_errors.py
-from tests.cli.subprocess.test_cli_student_commands import run_cli
+from tests.cli.subprocess._cli_runner import run_cli
 
 
 def test_student_add_validation_error():

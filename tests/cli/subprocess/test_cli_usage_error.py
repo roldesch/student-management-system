@@ -3,7 +3,7 @@
 import subprocess
 import sys
 
-from tests.cli.subprocess.test_cli_student_commands import run_cli
+from tests.cli.subprocess._cli_runner import run_cli
 
 
 def test_cli_usage_error_missing_required_arguments():
