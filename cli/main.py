@@ -1,5 +1,8 @@
 # cli/main.py
 
+import os
+from pathlib import Path
+
 import argparse
 import sys
 from typing import TYPE_CHECKING
@@ -413,6 +416,24 @@ def build_parser() -> argparse.ArgumentParser:
 # -------------------------------------------------
 # Main entry point with scoped argparse handling
 # -------------------------------------------------
+def _build_persistence_config() -> PersistenceConfig:
+    """
+    Runtime persistence selection.
+
+    Phase-6 verification override via environment variables.
+    Default remains in-memory.
+    """
+    backend = os.getenv("SMS_BACKEND", "memory")
+
+    if backend == "sqlite":
+        return PersistenceConfig(
+            backend="sqlite",
+            sqlite_path=Path(os.getenv("SMS_SQLITE_PATH", "test_sms.db")),
+        )
+
+    return PersistenceConfig()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
 
@@ -424,7 +445,7 @@ def main(argv: list[str] | None = None) -> int:
             # argparse exits here -> usage error
             return EXIT_USAGE_ERROR if e.code != 0 else EXIT_SUCCESS
 
-        config = PersistenceConfig()
+        config = _build_persistence_config()
         sms = create_sms(config)
 
         dispatch(sms, args)
