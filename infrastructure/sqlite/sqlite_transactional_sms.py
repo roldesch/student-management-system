@@ -12,6 +12,7 @@ from application.responses.student_response import StudentResponse
 from application.responses.teacher_response import TeacherResponse
 from application.responses.course_response import CourseResponse
 
+from infrastructure.sqlite.bootstrap import initialize_sqlite_database
 from infrastructure.sqlite.unit_of_work import UnitOfWork
 from infrastructure.sqlite.repositories.sqlite_student_repository import SQLiteStudentRepository
 from infrastructure.sqlite.repositories.sqlite_teacher_repository import SQLiteTeacherRepository
@@ -67,6 +68,11 @@ class SqliteTransactionalStudentManagementSystem:
         # Store strict internal Path invariant in _db_path.
         normalized = Path(self.sqlite_path)
         object.__setattr__(self, "_db_path", normalized)
+
+        # Phase-1 Guarantee:
+        # Ensure database schema and required pragmas exist
+        # before any UnitOfWork begins.
+        initialize_sqlite_database(self._db_path)
 
     # ---------------------------------------------------------
     # Internal execution wrapper
@@ -136,3 +142,10 @@ class SqliteTransactionalStudentManagementSystem:
             write=False,
             fn=lambda sms: sms.get_course(code),
         )
+
+    def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
+        return self._execute_in_transaction(
+            write=True,
+            fn=lambda sms: sms.enroll_student_in_course(student_id, course_code),
+        )
+
