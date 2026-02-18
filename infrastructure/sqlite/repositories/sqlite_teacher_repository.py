@@ -12,7 +12,10 @@ from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
     DuplicateEntityError,
 )
-from infrastructure.sqlite.errors import (PersistenceError)
+from infrastructure.sqlite.errors import (
+    PersistenceError,
+    ForeignKeyViolationError,
+)
 
 from infrastructure.sqlite.row_mappers.teacher_rows import teacher_row_to_primitives
 
@@ -51,13 +54,18 @@ class SQLiteTeacherRepository(TeacherRepository):
                 (teacher.id, teacher.name),    # domain id -> persistence teacher_id
             )
         except sqlite3.IntegrityError as exc:
-            message = str(exc)
-            if "UNIQUE constraint failed: teacher.teacher_id" in message:
-                raise DuplicateEntityError(message) from exc
-            elif "FOREIGN KEY constraint failed" in message:
-                raise PersistenceError(message) from exc
+            msg = str(exc).lower()
+
+            # Duplicate student identity → state semantics
+            if "unique constraint failed: teachers.teacher_id" in msg:
+                raise DuplicateEntityError(str(msg)) from exc
+
+            # FK violation (if schema evolves) → persistence semantics
+            elif "foreign key constraint failed" in msg:
+                raise ForeignKeyViolationError(msg) from exc
+
             else:
-                raise PersistenceError(message) from exc
+                raise PersistenceError(str(msg)) from exc
 
         except sqlite3.Error as exc:
             raise PersistenceError(str(exc)) from exc

@@ -14,7 +14,10 @@ from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
     DuplicateEntityError,
 )
-from infrastructure.sqlite.errors import (PersistenceError)
+from infrastructure.sqlite.errors import (
+    PersistenceError,
+    ForeignKeyViolationError,
+)
 
 from infrastructure.sqlite.row_mappers.course_rows import course_row_to_primitives
 from infrastructure.sqlite.row_mappers.student_rows import student_row_to_primitives
@@ -71,9 +74,17 @@ class SQLiteCourseRepository(CourseRepository):
             )
         except sqlite3.IntegrityError as exc:
             msg = str(exc).lower()
+
+            # Duplicate course identity -> state semantics
             if "unique constraint failed: courses.course_code" in msg:
                 raise DuplicateEntityError(str(exc)) from exc
+
+            # Invalid teacher reference -> persistence semantics
+            if "foreign key constraint failed" in msg:
+                raise ForeignKeyViolationError(str(exc)) from exc
+
             raise PersistenceError(str(exc)) from exc
+
         except sqlite3.Error as exc:
             raise PersistenceError(str(exc)) from exc
 
@@ -89,7 +100,16 @@ class SQLiteCourseRepository(CourseRepository):
                     (course.code, student.id, grade),
                 )
         except sqlite3.IntegrityError as exc:
+            msg = str(exc).lower()
+            if "unique constraint failed: enrollments.course_code" in msg:
+                raise DuplicateEntityError(str(exc)) from exc
+
+            # Missing student or course reference
+            if "foreign key constraint failed" in msg:
+                raise ForeignKeyViolationError(str(exc)) from exc
+
             raise PersistenceError(str(exc)) from exc
+
         except sqlite3.Error as exc:
             raise PersistenceError(str(exc)) from exc
 
