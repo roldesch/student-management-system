@@ -1,4 +1,4 @@
-# tests/infrastructure/sqlite/test_course_repository_contract.py
+# tests/contracts/repository/test_course_repository_contract.py
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
 )
 
-from tests.infrastructure.sqlite.conftest import RepositoryHarness
+from tests.contracts.repository.conftest import RepositoryHarness
 
 
 # -----------------------------------------------------------------------------
@@ -40,6 +40,8 @@ def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
 # - Identity and existence behavior
 # - No business rule assertions
 # - No ordering guarantees
+# - Exact exception identity enforcement
+# - Domain entity shape enforcement
 # -----------------------------------------------------------------------------
 
 def test_course_repository_add_then_get_returns_course_with_same_identity_and_name(
@@ -56,6 +58,7 @@ def test_course_repository_add_then_get_returns_course_with_same_identity_and_na
         loaded = scope.courses.get("C01")
 
     # Assert
+    assert isinstance(loaded, Course)  # entity shape enforcement
     assert loaded.code == "C01"
     assert loaded.name == "Math"
 
@@ -73,8 +76,11 @@ def test_course_repository_add_existing_course_identity_raises_duplicate_entity_
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(DuplicateEntityError):
+        with pytest.raises(DuplicateEntityError) as exc_info:
             scope.courses.add(Course(code="C01", name="Math Clone"))
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is DuplicateEntityError
 
 
 def test_course_repository_get_missing_course_raises_entity_not_found_error(
@@ -87,8 +93,11 @@ def test_course_repository_get_missing_course_raises_entity_not_found_error(
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exc_info:
             scope.courses.get(missing_course_code)
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_course_repository_remove_existing_course_then_get_raises_entity_not_found_error(
@@ -108,8 +117,11 @@ def test_course_repository_remove_existing_course_then_get_raises_entity_not_fou
 
     # Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exc_info:
             scope.courses.get("C01")
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_course_repository_remove_missing_course_raises_entity_not_found_error(
@@ -122,9 +134,16 @@ def test_course_repository_remove_missing_course_raises_entity_not_found_error(
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exc_info:
             scope.courses.remove(missing_course_code)
 
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
+
+
+# -----------------------------------------------------------------------------
+# Aggregate Reconstruction (Critical for Phase-4B)
+# -----------------------------------------------------------------------------
 
 def test_course_repository_get_restores_teacher_and_enrollments(
         repository_harness: RepositoryHarness,
@@ -147,14 +166,26 @@ def test_course_repository_get_restores_teacher_and_enrollments(
     with repository_harness.new_scope() as scope:
         loaded = scope.courses.get("C01")
 
-    # Assert
+    # Assert — aggregate shape enforcement
+    assert isinstance(loaded, Course)
+    assert loaded.code == "C01"
+    assert loaded.name == "Math"
+
+    # Teacher restoration
     assert loaded.teacher is not None
+    assert isinstance(loaded.teacher, Teacher)
     assert loaded.teacher.id == "T01"
+    assert loaded.teacher.name == "Dr. Smith"
 
-    enrolled_students = {s.id for s in loaded.students}
-    assert enrolled_students == {"S01"}
+    # Student restoration
+    enrolled_students = list(loaded.students)
+    assert all(isinstance(s, Student) for s in enrolled_students)
+    assert {s.id for s in enrolled_students} == {"S01"}
+    assert {s.name for s in enrolled_students} == {"Alice"}
 
-    restored_student = next(iter(loaded.students))
+
+    # Grade restoration
+    restored_student = enrolled_students[0]
     assert restored_student.get_grade(loaded) == 9.5
 
 
@@ -177,6 +208,7 @@ def test_course_repository_list_all_returns_all_courses_regardless_of_order(
         result = list(scope.courses.list_all())
 
     # Assert
+    assert all(isinstance(course, Course) for course in result)
     assert {course.code for course in result} == {"C01", "C02", "C03"}
 
 

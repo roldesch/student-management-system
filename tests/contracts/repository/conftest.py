@@ -8,6 +8,16 @@ from typing import Callable, Iterable, Literal, Protocol, runtime_checkable
 
 import pytest
 
+# -------------------------------------------------------------------------
+# Domain entities (contract return types)
+# -------------------------------------------------------------------------
+from domain.models.student import Student
+from domain.models.teacher import Teacher
+from domain.models.course import Course
+
+# -------------------------------------------------------------------------
+# SQLite infrastructure wiring
+# -------------------------------------------------------------------------
 from infrastructure.sqlite.bootstrap import initialize_sqlite_database
 from infrastructure.sqlite.unit_of_work import UnitOfWork
 
@@ -16,7 +26,7 @@ from infrastructure.sqlite.repositories.sqlite_teacher_repository import SQLiteT
 from infrastructure.sqlite.repositories.sqlite_course_repository import SQLiteCourseRepository
 
 # -----------------------------------------------------------------------------
-# In-memory repositories (contract counterparts)
+# In-memory infrastructure wiring
 # -----------------------------------------------------------------------------
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
@@ -24,30 +34,30 @@ from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseR
 
 
 # -----------------------------------------------------------------------------
-# Structural typing only (no inheritance assumptions)
+# Structural repository contracts (STRICT — domain return types enforced)
 # -----------------------------------------------------------------------------
 @runtime_checkable
 class StudentRepositoryLike(Protocol):
-    def add(self, student) -> None: ...
-    def get(self, student_id: str): ...
+    def add(self, student: Student) -> None: ...
+    def get(self, student_id: str) -> Student: ...
     def remove(self, student_id: str) -> None: ...
-    def list_all(self) -> Iterable[object]: ...
+    def list_all(self) -> Iterable[Student]: ...
 
 
 @runtime_checkable
 class TeacherRepositoryLike(Protocol):
-    def add(self, teacher) -> None: ...
-    def get(self, teacher_id: str): ...
+    def add(self, teacher: Teacher) -> None: ...
+    def get(self, teacher_id: str) -> Teacher: ...
     def remove(self, teacher_id: str) -> None: ...
-    def list_all(self) -> Iterable[object]: ...
+    def list_all(self) -> Iterable[Teacher]: ...
 
 
 @runtime_checkable
 class CourseRepositoryLike(Protocol):
-    def add(self, course) -> None: ...
-    def get(self, course_code: str): ...
+    def add(self, course: Course) -> None: ...
+    def get(self, course_code: str) -> Course: ...
     def remove(self, course_code: str) -> None: ...
-    def list_all(self) -> Iterable[object]: ...
+    def list_all(self) -> Iterable[Course]: ...
 
 RepositoryKind = Literal["memory", "sqlite"]
 
@@ -64,12 +74,16 @@ class RepositoryScope(Protocol):
     def __exit__(self, exc_type, exc, tb) -> None: ...
 
 
+# -------------------------------------------------------------------------
+# In-memory scope (no-op lifecycle, same shape as SQLite)
+# -------------------------------------------------------------------------
+
 class _MemoryRepositoryScope:
     """
     Explicit scope for in-memory repositories.
 
-    This is intentionally a no-op context manager, but it enforces the same
-    lifecycle shape as SQLite: tests always operate within an explicit scope.
+    This intentionally mirrors SQLite lifecycle shape,
+    even though memory has no real transaction boundary.
     """
 
     def __init__(
@@ -83,7 +97,7 @@ class _MemoryRepositoryScope:
         self.teachers = teachers
         self.courses = courses
 
-    def __enter__(self) -> "_MemoryRepositoryScope":
+    def __enter__(self) -> "RepositoryScope":
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -91,24 +105,29 @@ class _MemoryRepositoryScope:
         return None
 
 
+# -------------------------------------------------------------------------
+# SQLite scope (exactly one UnitOfWork per scope)
+# -------------------------------------------------------------------------
+
 class _SqliteRepositoryScope:
     """
     Explicit scope for SQLite repositories.
 
-    Owns exactly one UnitOfWork, therefore:
-    - exactly one connection
-    - exactly one transaction per scope
+    Guarantees:
+    - Exactly one UnitOfWork
+    - Exactly one connection
+    - Exactly one transaction per scope
     """
 
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
         self._uow: UnitOfWork | None = None
 
-        self.students: SQLiteStudentRepository | None = None
-        self.teachers: SQLiteTeacherRepository | None = None
-        self.courses: SQLiteCourseRepository | None = None
+        self.students: StudentRepositoryLike | None = None
+        self.teachers: TeacherRepositoryLike | None = None
+        self.courses: CourseRepositoryLike | None = None
 
-    def __enter__(self) -> "_SqliteRepositoryScope":
+    def __enter__(self) -> "RepositoryScope":
         self._uow = UnitOfWork(self._db_path, write=True)
         self._uow.__enter__()
 
@@ -130,7 +149,7 @@ class _SqliteRepositoryScope:
 
 
 # -----------------------------------------------------------------------------
-# Harness fixture (contract entry point)
+# Contract Harness Fixture
 # -----------------------------------------------------------------------------
 @dataclass(frozen=True, slots=True)
 class RepositoryHarness:
@@ -143,12 +162,14 @@ def repository_harness(
         tmp_path: Path,
 ) -> RepositoryHarness:
     """
-    Contract harness used by all SQLite repositories contract tests.
+    Dual-backend repository contract harness.
 
-    Rule:
-    - Tests MUST acquire repositories only via an explicit scope:
+    Rules:
+    - Tests MUST obtain repositories only via:
         with repository_harness.new_scope() as scope:
             scope.students.add(...)
+    - No direct instantiation in tests.
+    - No backend branching in test bodies.
     """
     kind: RepositoryKind = request.param # type: ignore[assignment]
 
@@ -166,6 +187,7 @@ def repository_harness(
             ),
         )
 
+    # SQLite branch
     db_path = tmp_path / "sms_contract_test.sqlite3"
     initialize_sqlite_database(db_path)
 

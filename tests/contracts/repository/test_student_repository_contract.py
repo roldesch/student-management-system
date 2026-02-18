@@ -1,5 +1,5 @@
 
-# tests/infrastructure/sqlite/test_student_repository_contract.py
+# tests/contracts/repository/test_student_repository_contract.py
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
 )
 
-from tests.infrastructure.sqlite.conftest import RepositoryHarness
+from tests.contracts.repository.conftest import RepositoryHarness
 
 # -----------------------------------------------------------------------------
 # Helpers (Phase-4A temporary enforcement)
@@ -35,6 +35,8 @@ def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
 # - Identity and existence behavior
 # - No business rules
 # - No ordering guarantees
+# - Exact exception identity enforcement
+# - Domain entity shape enforcement
 # -----------------------------------------------------------------------------
 
 def test_student_repository_add_then_get_returns_student_with_same_identity_and_name(
@@ -51,6 +53,7 @@ def test_student_repository_add_then_get_returns_student_with_same_identity_and_
         loaded = scope.students.get("S01")
 
     # Assert
+    assert isinstance(loaded, Student)    # entity shape enforcement
     assert loaded.id == "S01"
     assert loaded.name == "Alice"
 
@@ -68,8 +71,13 @@ def test_student_repository_add_existing_student_identity_raises_duplicate_entit
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(DuplicateEntityError):
-            scope.students.add(Student(student_id="S01", name="Alice Clone"))
+        with pytest.raises(DuplicateEntityError) as exc_info:
+            scope.students.add(
+                Student(student_id="S01", name="Alice Clone")
+            )
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is DuplicateEntityError
 
 
 def test_student_repository_get_missing_student_raises_entity_not_found_error(
@@ -82,8 +90,11 @@ def test_student_repository_get_missing_student_raises_entity_not_found_error(
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exc_info:
             scope.students.get(missing_student_id)
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_student_repository_remove_existing_student_then_get_raises_entity_not_found_error(
@@ -102,9 +113,11 @@ def test_student_repository_remove_existing_student_then_get_raises_entity_not_f
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exc_info:
             scope.students.get("S01")
 
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_student_repository_remove_missing_student_raises_entity_not_found_error(
@@ -117,8 +130,11 @@ def test_student_repository_remove_missing_student_raises_entity_not_found_error
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
-       with pytest.raises(EntityNotFoundError):
+       with pytest.raises(EntityNotFoundError) as exc_info:
            scope.students.remove(missing_student_id)
+
+    # Exact type identity enforcement
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_student_repository_list_all_returns_all_students_regardless_of_order(
@@ -140,7 +156,12 @@ def test_student_repository_list_all_returns_all_students_regardless_of_order(
         result = list(scope.students.list_all())
 
     # Assert
+    # Domain entity shape enforcement
+    assert all(isinstance(student, Student) for student in result)
+
+    # Identity correctness (no ordering guarantees)
     assert {student.id for student in result} == {"S01", "S02", "S03"}
+
 
 
 
