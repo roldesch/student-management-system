@@ -51,8 +51,14 @@ class SQLiteTeacherRepository(TeacherRepository):
                 (teacher.id, teacher.name),    # domain id -> persistence teacher_id
             )
         except sqlite3.IntegrityError as exc:
-            # Currently safe: only PK constraint exists on teachers.teacher_id
-            raise DuplicateEntityError(str(exc)) from exc
+            message = str(exc)
+            if "UNIQUE constraint failed: teacher.teacher_id" in message:
+                raise DuplicateEntityError(message) from exc
+            elif "FOREIGN KEY constraint failed" in message:
+                raise PersistenceError(message) from exc
+            else:
+                raise PersistenceError(message) from exc
+
         except sqlite3.Error as exc:
             raise PersistenceError(str(exc)) from exc
 

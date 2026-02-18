@@ -37,6 +37,9 @@ class SQLiteStudentRepository(StudentRepository):
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
+    # ------------------------------------------------------------------
+    # add(student_id)
+    # ------------------------------------------------------------------
     def add(self, student: Student) -> None:
         try:
             self._connection.execute(
@@ -47,12 +50,21 @@ class SQLiteStudentRepository(StudentRepository):
                 (student.id, student.name),
             )
         except sqlite3.IntegrityError as exc:
-            # Duplicate primary key (student_id)
-            raise DuplicateEntityError(str(exc)) from exc
+            message = str(exc)
+
+            if "UNIQUE constraint failed: students.student_id" in message:
+                raise DuplicateEntityError(message) from exc
+            elif "FOREIGN KEY constraint failed" in message:
+                raise PersistenceError(message) from exc
+            else:
+                raise PersistenceError(message) from exc
+
         except sqlite3.Error as exc:
             raise PersistenceError(str(exc)) from exc
 
-
+    # ------------------------------------------------------------------
+    # get(student_id)
+    # ------------------------------------------------------------------
     def get(self, student_id: str) -> Student:
         try:
             cursor = self._connection.execute(
@@ -79,7 +91,9 @@ class SQLiteStudentRepository(StudentRepository):
             name=primitives["student_name"],
         )
 
-
+    # ------------------------------------------------------------------
+    # remove(student_id)
+    # ------------------------------------------------------------------
     def remove(self, student_id: str) -> None:
         try:
             cursor = self._connection.execute(
@@ -95,6 +109,9 @@ class SQLiteStudentRepository(StudentRepository):
         if cursor.rowcount == 0:
             raise EntityNotFoundError(f"Student not found: {student_id}")
 
+    # ------------------------------------------------------------------
+    # list_all()
+    # ------------------------------------------------------------------
 
     def list_all(self) -> Iterable[Student]:
         try:
