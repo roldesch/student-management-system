@@ -14,18 +14,6 @@ from domain.exceptions.domain_exceptions import (
 
 from tests.contracts.repository.conftest import RepositoryHarness
 
-# -----------------------------------------------------------------------------
-# Helpers (Phase-4A temporary enforcement)
-# -----------------------------------------------------------------------------
-def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
-    """
-    Phase-4A: In-memory repositories are known to violate ADR-00Z/ADR-00R
-    by raising domain errors instead of repository/state errors.
-    This helper makes that explicit without weakening the contract.
-    """
-    if repository_harness.kind == "memory":
-        pytest.xfail("Phase-4A: in-memory repositories not yet contract-compliant (Phase-4B).")
-
 
 # -----------------------------------------------------------------------------
 # StudentRepository Contract Tests
@@ -67,7 +55,6 @@ def test_student_repository_add_existing_student_identity_raises_duplicate_entit
     with repository_harness.new_scope() as scope:
         scope.students.add(student)
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -86,7 +73,6 @@ def test_student_repository_get_missing_student_raises_entity_not_found_error(
     # Arrange
     missing_student_id = "S04"
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -109,7 +95,6 @@ def test_student_repository_remove_existing_student_then_get_raises_entity_not_f
     with repository_harness.new_scope() as scope:
         scope.students.remove("S01")
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -126,7 +111,6 @@ def test_student_repository_remove_missing_student_raises_entity_not_found_error
     # Arrange
     missing_student_id = "S04"
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:

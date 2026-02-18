@@ -15,21 +15,6 @@ from tests.contracts.repository.conftest import RepositoryHarness
 
 
 # -----------------------------------------------------------------------------
-# Helpers (Phase-4A temporary enforcement)
-# -----------------------------------------------------------------------------
-def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
-    """
-    Phase-4A: In-memory repositories are known to violate ADR-00Z / ADR-00R
-    by raising domain errors instead of repository/state errors.
-    This helper makes that explicit without weakening the contract.
-    """
-    if repository_harness.kind == "memory":
-        pytest.xfail(
-            "Phase-4A: in-memory repositories not yet contract-compliant (Phase-4B)."
-        )
-
-
-# -----------------------------------------------------------------------------
 # TeacherRepository Contract Tests
 # -----------------------------------------------------------------------------
 # Scope:
@@ -69,7 +54,6 @@ def test_teacher_repository_add_existing_teacher_identity_raises_duplicate_entit
     with repository_harness.new_scope() as scope:
         scope.teachers.add(teacher)
 
-    _xfail_memory_noncompliant(repository_harness)  # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -87,7 +71,6 @@ def test_teacher_repository_get_missing_teacher_raises_entity_not_found_error(
     # Arrange
     missing_teacher_id = "T04"
 
-    _xfail_memory_noncompliant(repository_harness)  # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -109,7 +92,6 @@ def test_teacher_repository_remove_existing_teacher_then_get_raises_entity_not_f
     with repository_harness.new_scope() as scope:
         scope.teachers.remove("T01")
 
-    _xfail_memory_noncompliant(repository_harness)  # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -126,7 +108,6 @@ def test_teacher_repository_remove_missing_teacher_raises_entity_not_found_error
     # Arrange
     missing_teacher_id = "T04"
 
-    _xfail_memory_noncompliant(repository_harness)  # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:

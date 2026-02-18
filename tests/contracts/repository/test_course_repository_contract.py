@@ -17,21 +17,6 @@ from tests.contracts.repository.conftest import RepositoryHarness
 
 
 # -----------------------------------------------------------------------------
-# Helpers (Phase-4A temporary enforcement)
-# -----------------------------------------------------------------------------
-def _xfail_memory_noncompliant(repository_harness: RepositoryHarness) -> None:
-    """
-    Phase-4A: In-memory repositories are known to violate ADR-00Z / ADR-00R
-    by raising domain errors instead of repository/state errors.
-    This helper makes that explicit without weakening the contract.
-    """
-    if repository_harness.kind == "memory":
-        pytest.xfail(
-            "Phase-4A: in-memory repositories not yet contract-compliant (Phase-4B)."
-        )
-
-
-# -----------------------------------------------------------------------------
 # CourseRepository Contract Tests
 # -----------------------------------------------------------------------------
 # Scope:
@@ -72,7 +57,6 @@ def test_course_repository_add_existing_course_identity_raises_duplicate_entity_
     with repository_harness.new_scope() as scope:
         scope.courses.add(course)
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -89,7 +73,6 @@ def test_course_repository_get_missing_course_raises_entity_not_found_error(
     # Arrange
     missing_course_code = "C04"
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
@@ -113,7 +96,6 @@ def test_course_repository_remove_existing_course_then_get_raises_entity_not_fou
     with repository_harness.new_scope() as scope:
         scope.courses.remove("C01")
 
-    _xfail_memory_noncompliant(repository_harness)    # Phase-4A temporary suspension
 
     # Assert
     with repository_harness.new_scope() as scope:
@@ -130,7 +112,6 @@ def test_course_repository_remove_missing_course_raises_entity_not_found_error(
     # Arrange
     missing_course_code = "C04"
 
-    _xfail_memory_noncompliant(repository_harness)  # Phase-4A temporary suspension
 
     # Act / Assert
     with repository_harness.new_scope() as scope:
