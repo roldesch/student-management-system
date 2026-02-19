@@ -12,33 +12,52 @@ def run_cli(
     sqlite_path: Optional[Path] = None,
 ) -> subprocess.CompletedProcess[str]:
     """
-    Hermetic CLI subprocess runner.
+    Hermetic CLI subprocess runner (Safe Environment Merge).
 
-    - Does NOT inherit ambient environment.
+    Characteristics:
+    - Starts from a copy of the ambient environment (required for Windows stability).
+    - Overrides only SMS-specific variables.
     - Requires explicit backend selection.
     - Requires explicit SQLite path when backend="sqlite".
+    - Does not rely on implicit environment defaults for SMS configuration.
     """
     if backend not in {"memory", "sqlite"}:
         raise ValueError(f"Unsupported backend: {backend}")
 
-    # Minimal required environment
-    env = {
-        "SMS_BACKEND": backend,
-        "PYTHONIOENCODING": "utf-8",
-    }
+    # ------------------------------------------------------------------
+    # SAFE ENVIRONMENT BASELINE
+    # ------------------------------------------------------------------
+    #
+    # We copy the full OS environment to preserve required system
+    # variables (e.g., SystemDrive, TEMP, USERPROFILE on Windows).
+    #
+    # Starting from {} causes Windows path expansion issues and may
+    # create literal directories like "%SystemDrive%".
+    #
+    # This preserves OS stability while still enforcing explicit
+    # SMS configuration.
+    # ------------------------------------------------------------------
 
-    for key in ("PATH", "SYSTEMROOT", "COMSPEC"):
-        if key in os.environ:
-            env[key] = os.environ[key]
+    env = os.environ.copy()
 
-    # Preserve PYTHONPATH only if needed for module resolution
-    if "PYTHONPATH" in os.environ:
-        env["PYTHONPATH"] = os.environ["PYTHONPATH"]
+    # ------------------------------------------------------------------
+    # Explicit SMS configuration (override only what we control)
+    # ------------------------------------------------------------------
+
+    env["SMS_BACKEND"] = backend
+    env["PYTHONPATHIOENCODING"] = "utf-8"
 
     if backend == "sqlite":
         if sqlite_path is None:
             raise ValueError("sqlite_path is required when backend='sqlite'")
         env["SMS_SQLITE_PATH"] = str(sqlite_path)
+    else:
+        # Ensure no accidental carry-over from outer environment
+        env.pop("SMS_SQLITE_PATH", None)
+
+    # ------------------------------------------------------------------
+    # Execute CLI module
+    # ------------------------------------------------------------------
 
     return subprocess.run(
         [sys.executable, "-m", "cli.main", *args],
