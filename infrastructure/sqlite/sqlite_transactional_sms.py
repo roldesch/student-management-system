@@ -66,7 +66,7 @@ class SqliteTransactionalStudentManagementSystem:
     def __post_init__(self) -> None:
         # Normalize path exactly once at construction time.
         # Store strict internal Path invariant in _db_path.
-        normalized = Path(self.sqlite_path)
+        normalized = Path(self.sqlite_path).expanduser().resolve()
         object.__setattr__(self, "_db_path", normalized)
 
         # Phase-1 Guarantee:
@@ -131,16 +131,16 @@ class SqliteTransactionalStudentManagementSystem:
     # Course use cases
     # ---------------------------------------------------------
 
-    def add_course(self, code: str, name: str) -> CourseResponse:
+    def add_course(self, course_code: str, name: str) -> CourseResponse:
         return self._execute_in_transaction(
             write=True,
-            fn=lambda sms: sms.add_course(code, name),
+            fn=lambda sms: sms.add_course(course_code, name),
         )
 
-    def get_course(self, code: str) -> CourseResponse:
+    def get_course(self, course_code: str) -> CourseResponse:
         return self._execute_in_transaction(
             write=False,
-            fn=lambda sms: sms.get_course(code),
+            fn=lambda sms: sms.get_course(course_code),
         )
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:

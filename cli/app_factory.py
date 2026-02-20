@@ -10,6 +10,8 @@ from cli.application_api import StudentManagementSystemAPI
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
+
+from infrastructure.sqlite.bootstrap import initialize_sqlite_database
 from infrastructure.sqlite.sqlite_transactional_sms import SqliteTransactionalStudentManagementSystem
 
 
@@ -80,8 +82,14 @@ def create_sms(
                 "sqlite_path must be provided when backend='sqlite'."
             )
 
+        # Canonicalize exactly once
+        db_path = Path(config.sqlite_path).expanduser().resolve()
+
+        # Infrastructure bootstrap (idempotent)
+        initialize_sqlite_database(config.sqlite_path)
+
         return SqliteTransactionalStudentManagementSystem(
-            sqlite_path=config.sqlite_path,
+            sqlite_path=db_path,
         )
 
     else:
