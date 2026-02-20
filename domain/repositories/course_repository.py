@@ -36,3 +36,8 @@ class CourseRepository(BaseRepository[Course, str]):
     def list_all(self) -> Iterable[Course]:
         """Return all Courses as a read-only iterable."""
         raise NotImplementedError
+
+    @abstractmethod
+    def update(self, course: Course) -> None:
+        """Persist an existing Course aggregate."""
+        raise NotImplementedError

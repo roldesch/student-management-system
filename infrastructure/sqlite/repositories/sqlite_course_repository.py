@@ -251,4 +251,50 @@ class SQLiteCourseRepository(CourseRepository):
             # Identifier-only row; MUST delegate to get()
             yield self.get(row["course_code"])
 
+    # ------------------------------------------------------------------
+    # enroll_student()
+    # ------------------------------------------------------------------
+    def update(self, course: Course) -> None:
+        try:
+            cursor = self._connection.execute(
+                "SELECT 1 FROM courses WHERE course_code = ?",
+                (course.code,),
+            )
+            if cursor.fetchone() is None:
+                raise EntityNotFoundError(f"Course not found: {course.code}")
+
+            # Update course metadata (if changed)
+            self._connection.execute(
+                """
+                UPDATE courses
+                SET name = ?, teacher_id = ?
+                WHERE course_code = ?
+                """,
+                (
+                    course.name,
+                    course.teacher.id if course.teacher else None,
+                    course.code,
+                ),
+            )
+
+            # Replace enrollments
+            self._connection.execute(
+                "DELETE FROM enrollments WHERE course_code = ?",
+                (course.code,),
+            )
+
+            for student in course.students:
+                grade = student.get_grade(course)
+                self._connection.execute(
+                    """
+                    INSERT INTO enrollments (course_code, student_id, grade)
+                    VALUES (?, ?, ?)
+                    """,
+                    (course.code, student.id, grade),
+                )
+
+        except sqlite3.IntegrityError as exc:
+            raise PersistenceError(str(exc)) from exc
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
 

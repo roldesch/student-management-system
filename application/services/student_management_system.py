@@ -581,6 +581,7 @@ class StudentManagementSystem:
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         course.enroll(student)
+        self.course_repo.update(course)
 
     def drop_student_from_course(self, student_id: str, course_code: str) -> None:
         """
