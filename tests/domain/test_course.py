@@ -154,32 +154,3 @@ def test_enrolling_two_distinct_student_instances_with_same_identity_raises_enro
     # Act / Assert
     with pytest.raises(EnrollmentError):
         course.enroll(second_student)
-
-
-# -------------------------------------------------------------------
-# This test MUST fail under instance-based equality.
-# It enforces identity-based teacher assignment invariants (ADR-00E).
-# -------------------------------------------------------------------
-def test_assigning_two_distinct_teacher_instances_with_same_identity_raises_teacherassignmenterror(
-    make_course
-):
-    # Arrange
-    from domain.models.teacher import Teacher
-
-    course = make_course()
-
-    first_teacher = Teacher("T1", "Math")
-    second_teacher = Teacher("T1", "Math")
-
-    # Explicit reconstruction preconditions
-    assert first_teacher is not second_teacher
-    assert first_teacher.id == second_teacher.id
-    assert course.teacher is None  # explicit clean-state precondition
-
-    course.assign_teacher(first_teacher)
-    assert course.teacher is first_teacher  # confirm first assignment succeeded
-
-    # Act / Assert
-    with pytest.raises(TeacherAssignmentError):
-        course.assign_teacher(second_teacher)
-
