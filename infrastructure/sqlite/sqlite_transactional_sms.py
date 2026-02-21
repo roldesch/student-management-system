@@ -111,6 +111,14 @@ class SqliteTransactionalStudentManagementSystem:
             fn=lambda sms: sms.get_student(student_id),
         )
 
+    def list_students(self) -> list[StudentResponse]:
+        return self._execute_in_transaction(
+            write=False,
+            fn=lambda sms: sms.list_students(),
+        )
+
+
+
     # ---------------------------------------------------------
     # Teacher use cases
     # ---------------------------------------------------------
