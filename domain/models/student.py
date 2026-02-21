@@ -17,6 +17,7 @@ class Student:
         self._courses: List[Course] = []
         self._grades: Dict[Course, float] = {}
 
+
     # ----------- Protected internal access (only Course should call these) ----------
     def _add_course(self, course: "Course") -> None:
         if course in self._courses:
@@ -34,6 +35,7 @@ class Student:
 
         self._courses.remove(course)
         self._grades.pop(course, None)    # remove grade if existed
+
 
     # ---------- Grade Management ----------
     def assign_grade(self, course: "Course", value: float) -> None:
@@ -60,6 +62,21 @@ class Student:
 
     def get_grade(self, course: "Course") -> Optional[float]:
         return self._grades.get(course)
+
+
+    # ---------- Identity-based equality (ADR-00E) ----------
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self._id == other._id
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
 
     # ---------- Public properties (queries only) ----------
     @property
