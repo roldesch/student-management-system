@@ -6,6 +6,7 @@ from typing import Literal
 
 from application.services.student_management_system import StudentManagementSystem
 from cli.application_api import StudentManagementSystemAPI
+from cli.errors import ConfigurationError
 
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
@@ -69,7 +70,6 @@ def create_sms(
     Backend selection affects wiring only.
     """
 
-    # Lifecycle-safe default
     if config is None:
         config = PersistenceConfig()
 
@@ -78,15 +78,22 @@ def create_sms(
 
     elif config.backend == "sqlite":
         if config.sqlite_path is None:
-            raise ValueError(
+            raise ConfigurationError(
                 "sqlite_path must be provided when backend='sqlite'."
             )
 
-        # Canonicalize exactly once
-        db_path = Path(config.sqlite_path).expanduser().resolve()
+        db_path = config.sqlite_path
 
-        # Infrastructure bootstrap (idempotent)
-        initialize_sqlite_database(config.sqlite_path)
+        # Defensive guard - should already be canonical from main()
+        if not db_path.is_absolute():
+            raise ConfigurationError(
+                f"sqlite_path must be an absolute path, got: {str(db_path)!r}"
+            )
+
+        # ---------------------------------------------------------
+        # Bootstrap ownership — composition root only (ADR-007)
+        # ---------------------------------------------------------
+        initialize_sqlite_database(db_path)
 
         return SqliteTransactionalStudentManagementSystem(
             sqlite_path=db_path,
@@ -94,7 +101,7 @@ def create_sms(
 
     else:
         # Exhaustive backend guard - enforces composition-root authority
-        raise ValueError(f"Unsupported backend: {config.backend}")
+        raise ConfigurationError(f"Unsupported backend: {config.backend!r}")
 
 
 

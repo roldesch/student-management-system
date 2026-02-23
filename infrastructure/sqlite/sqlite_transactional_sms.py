@@ -12,7 +12,6 @@ from application.responses.student_response import StudentResponse
 from application.responses.teacher_response import TeacherResponse
 from application.responses.course_response import CourseResponse
 
-from infrastructure.sqlite.bootstrap import initialize_sqlite_database
 from infrastructure.sqlite.unit_of_work import UnitOfWork
 from infrastructure.sqlite.repositories.sqlite_student_repository import SQLiteStudentRepository
 from infrastructure.sqlite.repositories.sqlite_teacher_repository import SQLiteTeacherRepository
@@ -69,10 +68,9 @@ class SqliteTransactionalStudentManagementSystem:
         normalized = Path(self.sqlite_path).expanduser().resolve()
         object.__setattr__(self, "_db_path", normalized)
 
-        # Phase-1 Guarantee:
-        # Ensure database schema and required pragmas exist
-        # before any UnitOfWork begins.
-        initialize_sqlite_database(self._db_path)
+        # NOTE (ADR-007):
+        # Bootstrap ownership belongs exclusively to the composition root.
+        # This transactional proxy must not initialize schema.
 
     # ---------------------------------------------------------
     # Internal execution wrapper
