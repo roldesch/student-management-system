@@ -45,12 +45,15 @@ def run_cli(
     # ------------------------------------------------------------------
 
     env["SMS_BACKEND"] = backend
-    env["PYTHONPATHIOENCODING"] = "utf-8"
+    env["PYTHONIOENCODING"] = "utf-8"
 
     if backend == "sqlite":
-        if sqlite_path is None:
-            raise ValueError("sqlite_path is required when backend='sqlite'")
-        env["SMS_SQLITE_PATH"] = str(sqlite_path)
+        if sqlite_path is not None:
+            # Pass path exactly as given (relative allowed for testing rejection)
+            env["SMS_SQLITE_PATH"] = str(sqlite_path)
+        else:
+            # Explicitly ensure it is not set
+            env.pop("SMS_SQLITE_PATH", None)
     else:
         # Ensure no accidental carry-over from outer environment
         env.pop("SMS_SQLITE_PATH", None)
