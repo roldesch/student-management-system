@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from cli.version import SMS_VERSION
 from cli.app_factory import create_sms, PersistenceConfig
+from cli.errors import ConfigurationError
 from cli.rendering.errors import render_error
 from cli.rendering.printers import (
     print_student,
@@ -416,6 +417,24 @@ def build_parser() -> argparse.ArgumentParser:
 # -------------------------------------------------
 # Main entry point with scoped argparse handling
 # -------------------------------------------------
+def _require_canonical_sqlite_path_from_env() -> Path:
+    raw = os.getenv("SMS_SQLITE_PATH")
+    if raw is None or raw.strip() == "":
+        raise ConfigurationError(
+            "SMS_BACKEND=sqlite requires SMS_SQLITE_PATH to be explicitly set."
+        )
+
+    expanded = Path(raw).expanduser()
+
+    # Reject relative paths BEFORE resolve()
+    if not expanded.is_absolute():
+        raise ConfigurationError(
+            f"SMS_SQLITE_PATH must be an absolute path, got: {raw!r}"
+        )
+
+    # Canonicalize exactly once at the composition boundary
+    return expanded.resolve()
+
 def _build_persistence_config() -> PersistenceConfig:
     """
     Runtime persistence selection.
@@ -423,12 +442,13 @@ def _build_persistence_config() -> PersistenceConfig:
     Phase-6 verification override via environment variables.
     Default remains in-memory.
     """
-    backend = os.getenv("SMS_BACKEND", "memory")
+    backend = os.getenv("SMS_BACKEND", "memory").strip().lower()
 
     if backend == "sqlite":
+        sqlite_path = _require_canonical_sqlite_path_from_env()
         return PersistenceConfig(
             backend="sqlite",
-            sqlite_path=Path(os.getenv("SMS_SQLITE_PATH", "test_sms.db")),
+            sqlite_path=sqlite_path,
         )
 
     return PersistenceConfig()
