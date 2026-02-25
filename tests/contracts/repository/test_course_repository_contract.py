@@ -29,6 +29,72 @@ from tests.contracts.repository.conftest import RepositoryHarness
 # - Domain entity shape enforcement
 # -----------------------------------------------------------------------------
 
+def test_course_repository_update_existing_course_persists_full_aggregate_state(
+    repository_harness: RepositoryHarness,
+) -> None:
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+    student = Student(student_id="S01", name="Alice")
+
+    course = Course(code="C01", name="Math")
+    course.assign_teacher(teacher)
+    course.enroll(student)
+    student.assign_grade(course, 9.5)
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+        scope.students.add(student)
+        scope.courses.add(course)
+
+    # Modify full aggregate
+    course.name = "Advanced Math"
+    student.assign_grade(course, 10.0)
+
+    with repository_harness.new_scope() as scope:
+        scope.courses.update(course)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.courses.get("C01")
+
+    assert loaded.name == "Advanced Math"
+    assert loaded.teacher is not None
+    assert loaded.teacher.id == "T01"
+
+    enrolled = list(loaded.students)
+    assert len(enrolled) == 1
+    assert enrolled[0].id == "S01"
+    assert enrolled[0].get_grade(loaded) == 10.0
+
+
+def test_course_repository_update_is_idempotent(
+    repository_harness: RepositoryHarness,
+) -> None:
+    course = Course(code="C01", name="Math")
+
+    with repository_harness.new_scope() as scope:
+        scope.courses.add(course)
+
+    with repository_harness.new_scope() as scope:
+        scope.courses.update(course)
+        scope.courses.update(course)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.courses.get("C01")
+
+    assert loaded.name == "Math"
+
+
+def test_course_repository_update_missing_course_raises_entity_not_found_error(
+    repository_harness: RepositoryHarness,
+) -> None:
+    course = Course(code="C01", name="Math")
+
+    with repository_harness.new_scope() as scope:
+        with pytest.raises(EntityNotFoundError) as exc_info:
+            scope.courses.update(course)
+
+    assert type(exc_info.value) is EntityNotFoundError
+
+
 def test_course_repository_add_then_get_returns_course_with_same_identity_and_name(
         repository_harness: RepositoryHarness,
 ) -> None:

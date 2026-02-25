@@ -37,3 +37,25 @@ class TeacherRepository(BaseRepository[Teacher, str]):
     def list_all(self) -> Iterable[Teacher]:
         """Returns all Teachers as a read-only iterable."""
         raise NotImplementedError
+
+    @abstractmethod
+    def update(self, teacher: Teacher) -> None:
+        """
+            Persist an existing Teacher entity.
+
+    Non-aggregate persistence contract:
+
+    - The teacher identity MUST already exist in the repository.
+    - If the identity does not exist, MUST raise EntityNotFoundError.
+    - MUST NOT perform upsert (no silent insert).
+    - MUST be idempotent when invoked with identical entity state.
+    - MUST persist only intrinsic attributes owned by Teacher.
+    - MUST NOT modify cross-aggregate relationships
+      (e.g., course assignments or enrollments).
+    - MUST NOT enforce business rules or invariants.
+    - MUST assume it is executed inside an active UnitOfWork transaction.
+
+    Teacher is NOT an aggregate root.
+    Assignment invariants are governed by Course.
+        """
+        raise NotImplementedError

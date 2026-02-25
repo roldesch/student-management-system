@@ -47,9 +47,10 @@ class InMemoryCourseRepository(CourseRepository):
         return tuple(self._courses.values())
 
     def update(self, course: Course) -> None:
-        if course.code not in self._courses:
-            raise EntityNotFoundError(f"Course '{course.code}' not found.")
-        self._courses[course.code] = course
+        course_code = course.code
+        if course_code not in self._courses:
+            raise EntityNotFoundError(f"Course '{course_code}' not found.")
+        self._courses[course_code] = course
 
     # Test utility - not part of domain interface
     def clear(self) -> None:

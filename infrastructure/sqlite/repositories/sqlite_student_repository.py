@@ -142,3 +142,21 @@ class SQLiteStudentRepository(StudentRepository):
                 name=primitives["student_name"],
             )
 
+    # ------------------------------------------------------------------
+    # update(student)
+    # ------------------------------------------------------------------
+    def update(self, student: Student) -> None:
+        try:
+            cursor = self._connection.execute(
+                """
+                UPDATE students
+                SET name = ?
+                WHERE student_id = ?
+                """,
+                (student.name, student.id),
+            )
+        except sqlite3.Error as exc:
+            raise PersistenceError(str(exc)) from exc
+
+        if cursor.rowcount == 0:
+            raise EntityNotFoundError(f"Student not found: {student.id}")

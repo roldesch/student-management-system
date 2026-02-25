@@ -45,6 +45,55 @@ def test_teacher_repository_add_then_get_returns_teacher_with_same_identity_and_
     assert loaded.name == "Dr. Smith"
 
 
+def test_teacher_repository_update_existing_teacher_persists_state(
+    repository_harness: RepositoryHarness,
+) -> None:
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+
+    teacher.name = "Dr. Smith Updated"
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.update(teacher)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.teachers.get("T01")
+
+    assert loaded.name == "Dr. Smith Updated"
+
+
+def test_teacher_repository_update_is_idempotent(
+    repository_harness: RepositoryHarness,
+) -> None:
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.update(teacher)
+        scope.teachers.update(teacher)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.teachers.get("T01")
+
+    assert loaded.name == "Dr. Smith"
+
+
+def test_teacher_repository_update_missing_teacher_raises_entity_not_found_error(
+    repository_harness: RepositoryHarness,
+) -> None:
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+
+    with repository_harness.new_scope() as scope:
+        with pytest.raises(EntityNotFoundError) as exc_info:
+            scope.teachers.update(teacher)
+
+    assert type(exc_info.value) is EntityNotFoundError
+
+
 def test_teacher_repository_add_existing_teacher_identity_raises_duplicate_entity_error(
     repository_harness: RepositoryHarness,
 ) -> None:

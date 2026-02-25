@@ -1,4 +1,3 @@
-
 # tests/contracts/repository/test_student_repository_contract.py
 
 from __future__ import annotations
@@ -44,6 +43,55 @@ def test_student_repository_add_then_get_returns_student_with_same_identity_and_
     assert isinstance(loaded, Student)    # entity shape enforcement
     assert loaded.id == "S01"
     assert loaded.name == "Alice"
+
+
+def test_student_repository_update_existing_student_persists_state(
+    repository_harness: RepositoryHarness,
+) -> None:
+    student = Student(student_id="S01", name="Alice")
+
+    with repository_harness.new_scope() as scope:
+        scope.students.add(student)
+
+    student.name = "Alice Updated"
+
+    with repository_harness.new_scope() as scope:
+        scope.students.update(student)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.students.get("S01")
+
+    assert loaded.name == "Alice Updated"
+
+
+def test_student_repository_update_is_idempotent(
+    repository_harness: RepositoryHarness,
+) -> None:
+    student = Student(student_id="S01", name="Alice")
+
+    with repository_harness.new_scope() as scope:
+        scope.students.add(student)
+
+    with repository_harness.new_scope() as scope:
+        scope.students.update(student)
+        scope.students.update(student)
+
+    with repository_harness.new_scope() as scope:
+        loaded = scope.students.get("S01")
+
+    assert loaded.name == "Alice"
+
+
+def test_student_repository_update_missing_student_raises_entity_not_found_error(
+    repository_harness: RepositoryHarness,
+) -> None:
+    student = Student(student_id="S01", name="Alice")
+
+    with repository_harness.new_scope() as scope:
+        with pytest.raises(EntityNotFoundError) as exc_info:
+            scope.students.update(student)
+
+    assert type(exc_info.value) is EntityNotFoundError
 
 
 def test_student_repository_add_existing_student_identity_raises_duplicate_entity_error(

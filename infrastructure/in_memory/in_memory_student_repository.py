@@ -46,6 +46,12 @@ class InMemoryStudentRepository(StudentRepository):
         # Return an immutable snapshot to avoid exposing internal state.
         return tuple(self._students.values())
 
+    def update(self, student: Student) -> None:
+        student_id = student.id
+        if student_id not in self._students:
+            raise EntityNotFoundError(f"Student '{student_id}' not found.")
+        self._students[student_id] = student
+
     # Test utility - not part of the domain interface.
     def clear(self) -> None:
         self._students.clear()
