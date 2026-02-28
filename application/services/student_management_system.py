@@ -275,7 +275,24 @@ class StudentManagementSystem:
         # ------------------------------------------------------------
 
         student = self._get_student_entity(student_id)
-        return self._student_response_from_domain(student)
+
+        enrolled_courses: list[str] = []
+        grades: dict[str, float] = {}
+
+        for course in self.course_repo.list_all():
+            for enrolled_student in course.students:
+                if enrolled_student.id == student_id:
+                    enrolled_courses.append(course.code)
+                    grade = enrolled_student.get_grade(course)
+                    if grade is not None:
+                        grades[course.code] = grade
+
+        return StudentResponse(
+            student_id=student.id,
+            name=student.name,
+            enrolled_courses=enrolled_courses,
+            grades=grades,
+        )
 
 
     def get_teacher(self, teacher_id: str) -> TeacherResponse:
@@ -302,7 +319,19 @@ class StudentManagementSystem:
         # ------------------------------------------------------------
 
         teacher = self._get_teacher_entity(teacher_id)
-        return self._teacher_response_from_domain(teacher)
+
+        course_codes: list[str] = []
+
+        for course in self.course_repo.list_all():
+            if course.teacher and course.teacher.id == teacher_id:
+                course_codes.append(course.code)
+
+        return TeacherResponse(
+            teacher_id=teacher.id,
+            name=teacher.name,
+            course_codes=course_codes,
+        )
+
 
     def get_course(self, code: str) -> CourseResponse:
         """
@@ -426,11 +455,15 @@ class StudentManagementSystem:
         # domain construction + persistence (NO validation below)
         # ------------------------------------------------------------
 
-        student = self._get_student_entity(student_id)
+        # Ensure student exists (and preserves "not found" behavior)
+        _ = self._get_student_entity(student_id)
 
-        # Drop this student from all their courses via Course (aggregate root)
-        for course in tuple(student.courses):
-            course.drop(student)
+        # Remove from all courses via course aggregate (authoritative)
+        for course in self.course_repo.list_all():
+            for enrolled_student in tuple(course.students):
+                if enrolled_student.id == student_id:
+                    course.drop(enrolled_student)
+                    self.course_repo.update(course)
 
         self.student_repo.remove(student_id)
 
@@ -459,16 +492,15 @@ class StudentManagementSystem:
         # ------------------------------------------------------------
         # domain construction + persistence (NO validation below)
         # ------------------------------------------------------------
+        # Ensure teacher exists (and preserves "not found" behavior)
+        _ = self._get_teacher_entity(teacher_id)
 
-        teacher = self._get_teacher_entity(teacher_id)
-
-        # Unassign from all courses where this teacher is assigned
-        for course in tuple(teacher.courses):
-            if course.teacher is teacher:
+        for course in self.course_repo.list_all():
+            if course.teacher is not None and course.teacher.id == teacher_id:
                 course.unassign_teacher()
+                self.course_repo.update(course)
 
         self.teacher_repo.remove(teacher_id)
-
     # ------------------------------------------------------------------
     # Orchestration of domain operations — PUBLIC COMMANDS
     # ------------------------------------------------------------------
@@ -513,6 +545,8 @@ class StudentManagementSystem:
         teacher = self._get_teacher_entity(teacher_id)
         course = self._get_course_entity(course_code)
         course.assign_teacher(teacher)
+        self.course_repo.update(course)
+        self.teacher_repo.update(teacher)
 
     def unassign_teacher_from_course(self, course_code: str) -> None:
         """
@@ -537,7 +571,11 @@ class StudentManagementSystem:
         # ------------------------------------------------------------
 
         course = self._get_course_entity(course_code)
+        teacher = course.teacher
         course.unassign_teacher()
+        self.course_repo.update(course)
+        if teacher is not None:
+            self.teacher_repo.update(teacher)
 
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
@@ -624,6 +662,7 @@ class StudentManagementSystem:
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         course.drop(student)
+        self.course_repo.update(course)
 
     # ------------------------------------------------------------------
     # Grades (owned by Student) — PUBLIC
@@ -683,8 +722,17 @@ class StudentManagementSystem:
         # domain orchestration (NO validation below)
         # ------------------------------------------------------------
 
-        student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
+
+        for enrolled_student in course.students:
+            if enrolled_student.id == student_id:
+                enrolled_student.assign_grade(course, value)
+                self.course_repo.update(course)
+                return
+
+        # If we reach here, student was not enrolled
+        # Let the domain invariant trigger properly
+        student = self._get_student_entity(student_id)
         student.assign_grade(course, value)
 
     def remove_grade_from_student(
@@ -728,6 +776,7 @@ class StudentManagementSystem:
         student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
         student.remove_grade(course)
+        self.course_repo.update(course)
 
     def get_student_grade(
             self, student_id: str, course_code: str
@@ -769,6 +818,10 @@ class StudentManagementSystem:
         # domain orchestration (NO validation below)
         # ------------------------------------------------------------
 
-        student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
-        return student.get_grade(course)
+
+        for enrolled_student in course.students:
+            if enrolled_student.id == student_id:
+                return enrolled_student.get_grade(course)
+
+        return None

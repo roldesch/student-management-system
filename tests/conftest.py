@@ -3,6 +3,7 @@ import pytest
 
 from application.services.student_management_system import StudentManagementSystem
 
+from infrastructure.in_memory.in_memory_store import InMemoryStore
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
@@ -23,10 +24,12 @@ def sms():
     This is the correct way to initialize the SMS after refactoring:
     using dependency-injected repository implementations.
     """
+    store = InMemoryStore()
+
     return StudentManagementSystem(
-        student_repo=InMemoryStudentRepository(),
-        teacher_repo=InMemoryTeacherRepository(),
-        course_repo=InMemoryCourseRepository(),
+        student_repo=InMemoryStudentRepository(store),
+        teacher_repo=InMemoryTeacherRepository(store),
+        course_repo=InMemoryCourseRepository(store),
     )
 
 # ----------------------------
