@@ -1,4 +1,4 @@
-# tests/infrastructure/sqlite/conftest.py
+# tests/contracts/repository/conftest.py
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ from infrastructure.sqlite.repositories.sqlite_course_repository import SQLiteCo
 # -----------------------------------------------------------------------------
 # In-memory infrastructure wiring
 # -----------------------------------------------------------------------------
+from infrastructure.in_memory.in_memory_store import InMemoryStore
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
@@ -42,6 +43,7 @@ class StudentRepositoryLike(Protocol):
     def get(self, student_id: str) -> Student: ...
     def remove(self, student_id: str) -> None: ...
     def list_all(self) -> Iterable[Student]: ...
+    def update(self, student: Student) -> None: ...
 
 
 @runtime_checkable
@@ -50,6 +52,7 @@ class TeacherRepositoryLike(Protocol):
     def get(self, teacher_id: str) -> Teacher: ...
     def remove(self, teacher_id: str) -> None: ...
     def list_all(self) -> Iterable[Teacher]: ...
+    def update(self, teacher: Teacher) -> None: ...
 
 
 @runtime_checkable
@@ -58,6 +61,7 @@ class CourseRepositoryLike(Protocol):
     def get(self, course_code: str) -> Course: ...
     def remove(self, course_code: str) -> None: ...
     def list_all(self) -> Iterable[Course]: ...
+    def update(self, course: Course) -> None: ...
 
 RepositoryKind = Literal["memory", "sqlite"]
 
@@ -82,20 +86,19 @@ class _MemoryRepositoryScope:
     """
     Explicit scope for in-memory repositories.
 
-    This intentionally mirrors SQLite lifecycle shape,
-    even though memory has no real transaction boundary.
+    Mirrors SQLite lifecycle shape while enforcing:
+    - Shared persistence store
+    - Detached semantics
+    - No identity map behavior
     """
 
-    def __init__(
-            self,
-            *,
-            students:InMemoryStudentRepository,
-            teachers: InMemoryTeacherRepository,
-            courses: InMemoryCourseRepository,
-    ) -> None:
-        self.students = students
-        self.teachers = teachers
-        self.courses = courses
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+
+        self.students = InMemoryStudentRepository(self._store)
+        self.teachers = InMemoryTeacherRepository(self._store)
+        self.courses = InMemoryCourseRepository(self._store)
+
 
     def __enter__(self) -> "RepositoryScope":
         return self
@@ -174,17 +177,11 @@ def repository_harness(
     kind: RepositoryKind = request.param # type: ignore[assignment]
 
     if kind == "memory":
-        students = InMemoryStudentRepository()
-        teachers = InMemoryTeacherRepository()
-        courses = InMemoryCourseRepository()
+        store = InMemoryStore()
 
         return RepositoryHarness(
             kind="memory",
-            new_scope=lambda : _MemoryRepositoryScope(
-                students=students,
-                teachers=teachers,
-                courses=courses
-            ),
+            new_scope=lambda : _MemoryRepositoryScope(store),
         )
 
     # SQLite branch

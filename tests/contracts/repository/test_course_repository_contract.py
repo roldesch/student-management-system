@@ -259,5 +259,85 @@ def test_course_repository_list_all_returns_all_courses_regardless_of_order(
     assert {course.code for course in result} == {"C01", "C02", "C03"}
 
 
+def test_course_repository_mutating_loaded_aggregate_without_update_does_not_persist(
+    repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+    student = Student(student_id="S01", name="Alice")
+
+    course = Course(code="C01", name="Math")
+    course.assign_teacher(teacher)
+    course.enroll(student)
+    student.assign_grade(course, 9.5)
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+        scope.students.add(student)
+        scope.courses.add(course)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.courses.get("C01")
+        loaded.name = "Advanced Math (not persisted)"
+
+        enrolled = list(loaded.students)
+        assert len(enrolled) == 1 # explicit precondition for test validity
+        enrolled[0].assign_grade(loaded, 10.0)
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.courses.get("C01")
+
+    assert reloaded.name == "Math"
+    assert reloaded.teacher is not None
+    assert reloaded.teacher.id == "T01"
+
+    re_enrolled = list(reloaded.students)
+    assert len(re_enrolled) == 1
+    assert re_enrolled[0].id == "S01"
+    assert re_enrolled[0].get_grade(reloaded) == 9.5
+
+
+def test_course_repository_mutating_loaded_aggregate_then_update_persists(
+    repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+    student = Student(student_id="S01", name="Alice")
+
+    course = Course(code="C01", name="Math")
+    course.assign_teacher(teacher)
+    course.enroll(student)
+    student.assign_grade(course, 9.5)
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+        scope.students.add(student)
+        scope.courses.add(course)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.courses.get("C01")
+        loaded.name = "Advanced Math"
+
+        enrolled = list(loaded.students)
+        assert len(enrolled) == 1  # explicit precondition
+        enrolled[0].assign_grade(loaded, 10.0)
+
+        scope.courses.update(loaded)
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.courses.get("C01")
+
+    assert reloaded.name == "Advanced Math"
+    assert reloaded.teacher is not None
+    assert reloaded.teacher.id == "T01"
+
+    re_enrolled = list(reloaded.students)
+    assert len(re_enrolled) == 1
+    assert re_enrolled[0].id == "S01"
+    assert re_enrolled[0].get_grade(reloaded) == 10.0
 
 

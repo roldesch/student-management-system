@@ -191,3 +191,46 @@ def test_teacher_repository_list_all_returns_all_teachers_regardless_of_order(
 
     # Identity correctness (no ordering guarantees)
     assert {teacher.id for teacher in result} == {"T01", "T02", "T03"}
+
+
+def test_teacher_repository_mutating_loaded_entity_without_update_does_not_persist(
+        repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.teachers.get("T01")
+        loaded.name = "Dr. Smith Mutated (not persisted)"
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.teachers.get("T01")
+
+    assert reloaded.name == "Dr. Smith"
+
+
+def test_teacher_repository_mutating_loaded_entity_then_update_persists(
+        repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    teacher = Teacher(teacher_id="T01", name="Dr. Smith")
+
+    with repository_harness.new_scope() as scope:
+        scope.teachers.add(teacher)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.teachers.get("T01")
+        loaded.name = "Dr. Smith Updated via loaded instance"
+        scope.teachers.update(loaded)
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.teachers.get("T01")
+
+    assert reloaded.name == "Dr. Smith Updated via loaded instance"

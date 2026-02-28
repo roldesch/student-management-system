@@ -195,6 +195,49 @@ def test_student_repository_list_all_returns_all_students_regardless_of_order(
     assert {student.id for student in result} == {"S01", "S02", "S03"}
 
 
+def test_student_repository_mutating_loaded_entity_without_update_does_not_persist(
+        repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    student = Student(student_id="S01", name="Alice")
+
+    with repository_harness.new_scope() as scope:
+        scope.students.add(student)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.students.get("S01")
+        loaded.name = "Alice Mutated (not persisted)"
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.students.get("S01")
+
+    assert reloaded.name == "Alice"
+
+
+def test_student_repository_mutating_loaded_entity_then_update_persists(
+        repository_harness: RepositoryHarness,
+) -> None:
+    # Arrange
+    student = Student(student_id="S01", name="Alice")
+
+    with repository_harness.new_scope() as scope:
+        scope.students.add(student)
+
+    # Act
+    with repository_harness.new_scope() as scope:
+        loaded = scope.students.get("S01")
+        loaded.name = "Alice Updated via loaded instance"
+        scope.students.update(loaded)
+
+    # Assert
+    with repository_harness.new_scope() as scope:
+        reloaded = scope.students.get("S01")
+
+    assert reloaded.name == "Alice Updated via loaded instance"
+
+
 
 
 

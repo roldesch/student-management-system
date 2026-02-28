@@ -91,3 +91,10 @@ class Course:
     def students(self) -> Tuple["Student", ...]:
         return tuple(self._students)
 
+    @name.setter
+    def name(self, new_name: str) -> None:
+        if not isinstance(new_name, str):
+            raise TypeError("Course name must be a string.")
+        if not new_name.strip():
+            raise ValueError("Course name cannot be empty.")
+        self._name = new_name.strip()
