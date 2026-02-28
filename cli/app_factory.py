@@ -8,6 +8,7 @@ from application.services.student_management_system import StudentManagementSyst
 from cli.application_api import StudentManagementSystemAPI
 from cli.errors import ConfigurationError
 
+from infrastructure.in_memory.in_memory_store import InMemoryStore
 from infrastructure.in_memory.in_memory_student_repository import InMemoryStudentRepository
 from infrastructure.in_memory.in_memory_teacher_repository import InMemoryTeacherRepository
 from infrastructure.in_memory.in_memory_course_repository import InMemoryCourseRepository
@@ -44,9 +45,11 @@ def _build_in_memory_sms() -> StudentManagementSystem:
     This preserves the pre-Phase-5 object graph exactly and
     must remain behaviorally identical.
     """
-    student_repo = InMemoryStudentRepository()
-    teacher_repo = InMemoryTeacherRepository()
-    course_repo = InMemoryCourseRepository()
+    store = InMemoryStore()
+
+    student_repo = InMemoryStudentRepository(store)
+    teacher_repo = InMemoryTeacherRepository(store)
+    course_repo = InMemoryCourseRepository(store)
 
     return StudentManagementSystem(
         student_repo=student_repo,
