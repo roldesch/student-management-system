@@ -251,10 +251,10 @@ class SqliteTransactionalStudentManagementSystem:
             lambda sms: sms.add_course(course_code, name),
         )
 
-    def get_course(self, course_code: str) -> CourseResponse:
+    def get_course(self, code: str) -> CourseResponse:
         return self._wrap(
             "get_course",
-            lambda sms: sms.get_course(course_code),
+            lambda sms: sms.get_course(code),
         )
 
     def list_courses(self) -> list[CourseResponse]:
