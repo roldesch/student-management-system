@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from collections.abc import Callable
-from typing import TypeVar
+from typing import TypeVar, ClassVar
 
 from application.services.student_management_system import StudentManagementSystem
 from application.responses.student_response import StudentResponse
@@ -65,7 +65,7 @@ class SqliteTransactionalStudentManagementSystem:
     # Any new command method added to StudentManagementSystem
     # must be explicitly listed here.
 
-    _WRITE_METHODS: frozenset[str] = frozenset({
+    _WRITE_METHODS: ClassVar[frozenset[str]] = frozenset({
         "add_student",
         "add_teacher",
         "add_course",
