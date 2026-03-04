@@ -59,6 +59,29 @@ class SqliteTransactionalStudentManagementSystem:
     _db_path: Path = field(init=False, repr=False)
 
     # ---------------------------------------------------------
+    # Write method classification
+    # ---------------------------------------------------------
+    # Authoritative classification of mutating operations.
+    # Any new command method added to StudentManagementSystem
+    # must be explicitly listed here.
+
+    _WRITE_METHODS: frozenset[str] = frozenset({
+        "add_student",
+        "add_teacher",
+        "add_course",
+        "remove_student",
+        "remove_teacher",
+        "remove_course",
+        "assign_teacher_to_course",
+        "unassign_teacher_from_course",
+        "enroll_student_in_course",
+        "drop_student_from_course",
+        "assign_grade_to_student",
+        "remove_grade_from_student",
+    })
+
+
+    # ---------------------------------------------------------
     # Initialization
     # ---------------------------------------------------------
 
@@ -73,7 +96,7 @@ class SqliteTransactionalStudentManagementSystem:
         # This transactional proxy must not initialize schema.
 
     # ---------------------------------------------------------
-    # Internal execution wrapper
+    # Transaction execution
     # ---------------------------------------------------------
 
     def _execute_in_transaction(
@@ -93,28 +116,85 @@ class SqliteTransactionalStudentManagementSystem:
 
             return fn(sms)
 
+    def _wrap(
+        self,
+        operation: str,
+        fn: Callable[[StudentManagementSystem], R],
+    ) -> R:
+        """
+        Delegate execution to StudentManagementSystem within a transaction.
+
+        Transaction mode (read vs write) is determined exclusively
+        by membership in _WRITE_METHODS.
+
+        This method is the single decision point for transaction mode.
+        """
+
+        write = operation in self._WRITE_METHODS
+
+        return self._execute_in_transaction(
+            write=write,
+            fn=fn,
+        )
+
     # ---------------------------------------------------------
     # Student use cases
     # ---------------------------------------------------------
 
     def add_student(self, student_id: str, name: str) -> StudentResponse:
-        return self._execute_in_transaction(
-            write=True,
-            fn=lambda sms: sms.add_student(student_id, name),
+        return self._wrap(
+            "add_student",
+            lambda sms: sms.add_student(student_id, name),
         )
 
     def get_student(self, student_id: str) -> StudentResponse:
-        return self._execute_in_transaction(
-            write=False,
-            fn=lambda sms: sms.get_student(student_id),
+        return self._wrap(
+            "get_student",
+            lambda sms: sms.get_student(student_id),
         )
 
     def list_students(self) -> list[StudentResponse]:
-        return self._execute_in_transaction(
-            write=False,
-            fn=lambda sms: sms.list_students(),
+        return self._wrap(
+            "list_students",
+            lambda sms: sms.list_students(),
         )
 
+    def remove_student(self, student_id: str) -> None:
+        return self._wrap(
+            "remove_student",
+            lambda sms: sms.remove_student(student_id),
+        )
+
+    def assign_grade_to_student(
+            self,
+            student_id: str,
+            course_code: str,
+            value: float,
+    ) -> None:
+        return self._wrap(
+            "assign_grade_to_student",
+            lambda sms: sms.assign_grade_to_student(student_id, course_code, value),
+        )
+
+    def remove_grade_from_student(
+            self,
+            student_id: str,
+            course_code: str,
+    ) -> None:
+        return self._wrap(
+            "remove_grade_from_student",
+            lambda sms: sms.remove_grade_from_student(student_id, course_code),
+        )
+
+    def get_student_grade(
+            self,
+            student_id: str,
+            course_code: str,
+    ) -> float | None:
+        return self._wrap(
+            "get_student_grade",
+            lambda sms: sms.get_student_grade(student_id, course_code),
+        )
 
 
     # ---------------------------------------------------------
@@ -122,15 +202,43 @@ class SqliteTransactionalStudentManagementSystem:
     # ---------------------------------------------------------
 
     def add_teacher(self, teacher_id: str, name: str) -> TeacherResponse:
-        return self._execute_in_transaction(
-            write=True,
-            fn=lambda sms: sms.add_teacher(teacher_id, name),
+        return self._wrap(
+            "add_teacher",
+            lambda sms: sms.add_teacher(teacher_id, name),
         )
 
     def get_teacher(self, teacher_id: str) -> TeacherResponse:
-        return self._execute_in_transaction(
-            write=False,
-            fn=lambda sms: sms.get_teacher(teacher_id),
+        return self._wrap(
+            "get_teacher",
+            lambda sms: sms.get_teacher(teacher_id),
+        )
+
+    def list_teachers(self) -> list[TeacherResponse]:
+        return self._wrap(
+            "list_teachers",
+            lambda sms: sms.list_teachers(),
+        )
+
+    def remove_teacher(self, teacher_id: str) -> None:
+        return self._wrap(
+            "remove_teacher",
+            lambda sms: sms.remove_teacher(teacher_id),
+        )
+
+    def assign_teacher_to_course(
+            self,
+            teacher_id: str,
+            course_code: str,
+    ) -> None:
+        return self._wrap(
+            "assign_teacher_to_course",
+            lambda sms: sms.assign_teacher_to_course(teacher_id, course_code),
+        )
+
+    def unassign_teacher_from_course(self, course_code: str) -> None:
+        return self._wrap(
+            "unassign_teacher_from_course",
+            lambda sms: sms.unassign_teacher_from_course(course_code),
         )
 
     # ---------------------------------------------------------
@@ -138,20 +246,42 @@ class SqliteTransactionalStudentManagementSystem:
     # ---------------------------------------------------------
 
     def add_course(self, course_code: str, name: str) -> CourseResponse:
-        return self._execute_in_transaction(
-            write=True,
-            fn=lambda sms: sms.add_course(course_code, name),
+        return self._wrap(
+            "add_course",
+            lambda sms: sms.add_course(course_code, name),
         )
 
     def get_course(self, course_code: str) -> CourseResponse:
-        return self._execute_in_transaction(
-            write=False,
-            fn=lambda sms: sms.get_course(course_code),
+        return self._wrap(
+            "get_course",
+            lambda sms: sms.get_course(course_code),
+        )
+
+    def list_courses(self) -> list[CourseResponse]:
+        return self._wrap(
+            "list_courses",
+            lambda sms: sms.list_courses(),
+        )
+
+    def remove_course(self, course_code: str) -> None:
+        return self._wrap(
+            "remove_course",
+            lambda sms: sms.remove_course(course_code),
         )
 
     def enroll_student_in_course(self, student_id: str, course_code: str) -> None:
-        return self._execute_in_transaction(
-            write=True,
-            fn=lambda sms: sms.enroll_student_in_course(student_id, course_code),
+        return self._wrap(
+            "enroll_student_in_course",
+            lambda sms: sms.enroll_student_in_course(student_id, course_code),
+        )
+
+    def drop_student_from_course(
+            self,
+            student_id: str,
+            course_code: str,
+    ) -> None:
+        return self._wrap(
+            "drop_student_from_course",
+            lambda sms: sms.drop_student_from_course(student_id, course_code),
         )
 
