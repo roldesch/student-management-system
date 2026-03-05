@@ -405,7 +405,7 @@ def build_parser() -> argparse.ArgumentParser:
     grade_assign = grade_subparsers.add_parser("assign", help="Assign a grade")
     grade_assign.add_argument("--student", required=True)
     grade_assign.add_argument("--course", required=True)
-    grade_assign.add_argument("--value", required=True)
+    grade_assign.add_argument("--value", required=True, type=float)
 
     grade_remove = grade_subparsers.add_parser("remove", help="Remove a grade")
     grade_remove.add_argument("--student", required=True)
