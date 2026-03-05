@@ -659,10 +659,17 @@ class StudentManagementSystem:
         # domain orchestration (NO validation below)
         # ------------------------------------------------------------
 
-        student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
+
+        for enrolled_student in course.students:
+            if enrolled_student.id == student_id:
+                course.drop(enrolled_student)
+                self.course_repo.update(course)
+                return
+
+        # Preserve domain invariant behavior
+        student = self._get_student_entity(student_id)
         course.drop(student)
-        self.course_repo.update(course)
 
     # ------------------------------------------------------------------
     # Grades (owned by Student) — PUBLIC
