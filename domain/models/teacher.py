@@ -14,6 +14,7 @@ class Teacher:
         self._name = name
         self._courses: List["Course"] = []
 
+
     # ---------- Protected internal access (only Course should call these) ----------
     def _add_course(self, course: "Course") -> None:
         if course in self._courses:
@@ -30,6 +31,21 @@ class Teacher:
             )
 
         self._courses.remove(course)
+
+
+    # ---------- Identity-based equality (ADR-00E) ----------
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self._id == other._id
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
 
     # ---------- Public properties (queries only) ----------
     @property

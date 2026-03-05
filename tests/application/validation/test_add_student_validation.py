@@ -13,7 +13,6 @@ Phase: Entity Creation Validation (Student)
 
 import pytest
 
-from application.services.student_management_system import StudentManagementSystem
 from application.validation.errors import (
     MissingFieldError,
     EmptyValueError,
@@ -21,29 +20,6 @@ from application.validation.errors import (
     InvalidIdentifierError,
 )
 
-from infrastructure.in_memory.in_memory_student_repository import (
-    InMemoryStudentRepository,
-)
-from infrastructure.in_memory.in_memory_teacher_repository import (
-    InMemoryTeacherRepository,
-)
-from infrastructure.in_memory.in_memory_course_repository import (
-    InMemoryCourseRepository,
-)
-
-
-# ---------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------
-
-@pytest.fixture
-def sms() -> StudentManagementSystem:
-    """Fresh SMS instance with empty in-memory repositories."""
-    return StudentManagementSystem(
-        student_repo=InMemoryStudentRepository(),
-        teacher_repo=InMemoryTeacherRepository(),
-        course_repo=InMemoryCourseRepository(),
-    )
 
 # ---------------------------------------------------------------------
 # student_id validation

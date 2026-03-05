@@ -18,6 +18,7 @@ class Course:
         self._students: List[Student] = []
         self._teacher: Optional[Teacher] = None
 
+
     # --------- Teacher Management ----------
     def assign_teacher(self, teacher: "Teacher") -> None:
         if self._teacher is not None:
@@ -38,6 +39,7 @@ class Course:
         self._teacher = None
         teacher._remove_course(self)    # protected internal mutation
 
+
     # ---------- Student Enrollment -----------
     def enroll(self, student: "Student") -> None:
         if student in self._students:
@@ -57,6 +59,21 @@ class Course:
         self._students.remove(student)
         student._remove_course(self)    # protected internal mutation
 
+
+    # ---------- Identity-based equality (ADR-00E) ----------
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self._code == other._code
+
+    def __hash__(self) -> int:
+        return hash(self._code)
+
+
     # ---------- Read-only properties ----------
     @property
     def code(self) -> str:
@@ -74,3 +91,10 @@ class Course:
     def students(self) -> Tuple["Student", ...]:
         return tuple(self._students)
 
+    @name.setter
+    def name(self, new_name: str) -> None:
+        if not isinstance(new_name, str):
+            raise TypeError("Course name must be a string.")
+        if not new_name.strip():
+            raise ValueError("Course name cannot be empty.")
+        self._name = new_name.strip()

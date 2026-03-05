@@ -5,6 +5,7 @@ from typing import Tuple
 # -------------------------------------------------
 # Import exception types (classification only)
 # -------------------------------------------------
+from cli.errors import ConfigurationError
 from application.validation.errors import ApplicationValidationError
 from domain.exceptions.domain_exceptions import (
     DomainError,
@@ -15,6 +16,7 @@ from domain.exceptions.domain_exceptions import (
 # -------------------------------------------------
 # Exit code constants (must match CLI policy)
 # -------------------------------------------------
+EXIT_CONFIGURATION_ERROR = 2
 EXIT_VALIDATION_ERROR = 2
 EXIT_DOMAIN_ERROR = 3
 EXIT_STATE_ERROR = 4
@@ -36,6 +38,14 @@ def render_error(exc: Exception) -> Tuple[int, str]:
 
     It is safe to unit-test in isolation.
     """
+    # -------------------------------------------------
+    # Configuration errors (composition boundary)
+    # -------------------------------------------------
+    if isinstance(exc, ConfigurationError):
+        return (
+            EXIT_CONFIGURATION_ERROR,
+            _render_configuration_error(exc),
+        )
 
     # -------------------------------------------------
     # Application-level validation errors
@@ -76,6 +86,16 @@ def render_error(exc: Exception) -> Tuple[int, str]:
 # -------------------------------------------------
 # Rendering helpers (private)
 # -------------------------------------------------
+def _render_configuration_error(exc: ConfigurationError) -> str:
+    """
+    Render configuration errors into stable, human-readable form.
+
+    Messages here are stable CLI output, not internal exception text.
+    """
+    # Stable prefix + deterministic message payload
+    return f"Invalid configuration: {str(exc)}"
+
+
 def _render_application_validation_error(
         exc: ApplicationValidationError,
 ) -> str:

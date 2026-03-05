@@ -129,5 +129,28 @@ def test_assigning_a_valid_grade_to_a_student_enrolled_in_the_course_succeeds(
     # Assert
     assert student.get_grade(course) == 8.5
 
+# -------------------------------------------------------------------
+# This test MUST fail under instance-based equality.
+# It enforces identity-based duplicate detection (ADR-00E).
+# -------------------------------------------------------------------
+def test_enrolling_two_distinct_student_instances_with_same_identity_raises_enrollmenterror(
+    make_course
+):
+    # Arrange
+    from domain.models.student import Student
 
+    course = make_course()
 
+    first_student = Student("S1", "Alice")
+    second_student = Student("S1", "Alice")
+
+    # Explicit reconstruction preconditions
+    assert first_student is not second_student
+    assert first_student.id == second_student.id
+
+    course.enroll(first_student)
+    assert first_student in course.students  # confirm first enrollment succeeded
+
+    # Act / Assert
+    with pytest.raises(EnrollmentError):
+        course.enroll(second_student)
