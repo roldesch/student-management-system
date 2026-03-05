@@ -773,10 +773,16 @@ class StudentManagementSystem:
         # domain orchestration (NO validation below)
         # ------------------------------------------------------------
 
-        student = self._get_student_entity(student_id)
         course = self._get_course_entity(course_code)
+
+        for enrolled_student in course.students:
+            if enrolled_student.id == student_id:
+                enrolled_student.remove_grade(course)
+                self.course_repo.update(course)
+                return
+
+        student = self._get_student_entity(student_id)
         student.remove_grade(course)
-        self.course_repo.update(course)
 
     def get_student_grade(
             self, student_id: str, course_code: str
