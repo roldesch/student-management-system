@@ -1,62 +1,68 @@
-🧩 CONTRIBUTING.md
 Contributing to StudentManagementSystem
 
-Thank you for your interest in contributing to StudentManagementSystem (SMS)!
-This project follows Clean Architecture and Domain-Driven Design (DDD) principles, and contributions must align with the architectural and testing standards defined here.
+Thank you for your interest in contributing to StudentManagementSystem (SMS).
 
-This document explains:
+This project serves as an educational reference implementation of:
 
-1. Project architecture
-2. Branching and workflow strategy
-3. Commit message conventions
-4. Code style & guidelines
-5. Test layers and rules
-6. Pull request (PR) expectations
-7. Documentation standards
-8. Automated architecture review workflow
+Clean Architecture
 
+Domain-Driven Design (DDD)
 
-🏛️ 1. Architectural Overview
+Repository-based persistence
 
-The SMS codebase is organized using Clean Architecture, which enforces strict boundaries:
+Layered validation and error taxonomy
 
-Domain Layer       → Business rules & entities
+All contributions must respect the architectural boundaries described in this document.
+
+1. Architectural Overview
+
+SMS follows Clean Architecture, separating responsibilities into four layers:
+
+Domain Layer       → Business rules and entities
 Application Layer  → Use-case orchestration
 Infrastructure     → Repository implementations
-Presentation       → (not implemented yet)
+Presentation       → CLI adapter
 
+Key architectural principles:
 
-Key goals:
-- Domain is framework-agnostic
-- Application layer depends only on domain abstractions
-- Infrastructure depends on domain repository interfaces
-- Test layers mirror architectural boundaries
-- All directories include __init__.py for packaging consistency
-- The full project tree lives in README.md.
+Domain models are framework-agnostic
 
+Business rules live only in the domain layer
 
+Application services orchestrate use cases
 
-🌿 2. Branching Strategy
+Infrastructure implements repository interfaces
 
-SMS uses a task-focused branching model:
+Presentation layers interact only with application services
 
-Branch Type	    Purpose	                         Naming Example
-feature/	    New feature or capability	     feature/system-tests
-bugfix/	        Fixing a defect	                 bugfix/teacher-assignment
-refactor/	    Improving design or structure    refactor/application/di-rewrite
-docs/	        Documentation updates	         docs/readme-updates
-ci/	            CI/CD or GitHub workflow changes	ci/pr-auto-review
+Domain entities never cross the application boundary
 
-Rules:
-- Branch from main unless working in an ongoing refactor.
-- Small, focused branches are preferred.
-- A branch should represent one logical unit of work.
-- Never push directly to main.
+The canonical project structure is documented in README.md.
 
+2. Branching Strategy
 
-📝 3. Commit Message Conventions
+SMS uses a task-focused branching model.
 
-SMS uses Conventional Commits with architecture-specific scopes.
+Branch Type Purpose Example
+feature/    New capability  feature/sqlite-persistence
+bugfix/ Fix defect  bugfix/teacher-assignment
+refactor/   Structural improvements refactor/cli-adapter
+docs/   Documentation updates   docs/readme-update
+ci/ CI/CD changes   ci/pr-review
+
+Guidelines:
+
+Branch from main
+
+Keep branches small and focused
+
+One branch should represent one logical change
+
+Avoid direct commits to main for non-trivial changes
+
+3. Commit Message Conventions
+
+SMS uses Conventional Commits.
 
 Format:
 
@@ -65,170 +71,226 @@ Format:
 <body explaining what and why>
 
 Types:
-- feat — new behavior
-- fix — bug fix
-- refactor — structural code changes
-- docs — documentation
-- test — test additions/changes
-- ci — automation or workflows
 
-Scopes:
-- domain, application, infrastructure, system, tests, docs, repo, etc.
+feat
+fix
+refactor
+docs
+test
+ci
+
+Common scopes:
+
+domain
+application
+infrastructure
+cli
+tests
+docs
+repo
 
 Examples:
-- refactor(application): inject repositories into SMS constructor
-- test(system): add end-to-end enrollment scenario
-- docs(readme): update architecture diagram
-- fix(domain): prevent double enrollment in the same course
 
-Commit bodies must explain architectural impact.
+refactor(cli): rename application_api to application_adapter
+test(system): add enrollment workflow scenario
+docs(readme): update architecture overview
+fix(domain): prevent duplicate enrollment
 
+Commit bodies should explain architectural impact when relevant.
 
-🧹 4. Code Style & Requirements
+4. Code Style and Requirements
 
-- Python 3.10+
-- PEP8 formatting
-- No unused imports
-- Avoid code duplication
-- Domain entities must remain persistence-agnostic
-- Application services should not import concrete repositories
-- Infrastructure modules must only depend on domain repository interfaces
-- Use dependency injection for all repository access
-- Keep methods cohesive and small
-- Public APIs must be covered by tests
+General guidelines:
 
+Python 3.10+
 
-🧪 5. Testing Guidelines
+Follow PEP8
 
-The test suite is organized by architectural layer:
+Avoid unused imports
+
+Avoid code duplication
+
+Keep methods small and cohesive
+
+Architectural constraints:
+
+Domain entities must remain persistence-agnostic
+
+Application services must not depend on infrastructure
+
+Infrastructure modules may depend on domain repository interfaces
+
+Repository implementations must live in the infrastructure layer
+
+Use dependency injection for repository access
+
+Public behavior changes must be covered by tests.
+
+5. Testing Guidelines
+
+The test suite mirrors the architecture.
 
 tests/
-│
-├── domain/       → Entity behavior & business rules
-├── integration/  → Domain + repository interactions
-└── system/       → Full SMS use-case flows
+├ domain
+├ application
+├ infrastructure
+├ integration
+├ system
+└ contracts
+Domain Tests
 
-✔ Domain Tests (tests/domain/)
-- Test invariants and entity behavior
-- No repositories, no application layer
-- Should be deterministic and fast
+tests/domain
 
-✔ Integration Tests (tests/integration/)
-- Use in-memory repositories
-- Validate repository interactions with domain models
-- No application service calls
+Verify entity behavior and invariants
 
-✔ System Tests (tests/system/)
-- Use the StudentManagementSystem API
-- Validate complete business flows:
-    * create entities
-    * assign teacher
-    * enroll student
-    * assign grade
-    * relationship cleanup
-- Always use dependency injection:
+No repositories or application services
 
-sms = StudentManagementSystem(
-    student_repo=InMemoryStudentRepository(),
-    teacher_repo=InMemoryTeacherRepository(),
-    course_repo=InMemoryCourseRepository(),
-)
+Must be deterministic
 
-Fixtures
-- Defined in tests/conftest.py
-- Must return fresh instances
-- Should not mutate shared state
+Application Tests
 
-Naming conventions
+tests/application
+
+Validate application-layer validation
+
+Verify response model behavior
+
+Test mapping logic
+
+Infrastructure Tests
+
+tests/infrastructure
+
+Validate persistence implementations
+
+Verify schema bootstrapping and row mapping
+
+Integration Tests
+
+tests/integration
+
+Validate multi-layer workflows
+
+Combine domain models and repositories
+
+System Tests
+
+tests/system
+
+Test complete application flows via StudentManagementSystem
+
+Simulate real system usage
+
+Contract Tests
+
+tests/contracts
+
+Enforce repository interface contracts
+
+Ensure backend substitution parity
+
+Test Naming
+
+Use descriptive names:
+
 test_<behavior>_<expected_result>()
 
-
 Examples:
-- test_enroll_student_adds_student_to_course
-- test_assign_grade_to_unenrolled_student_raises_error
 
-Required:
-- Every PR that modifies behavior must modify or add tests.
+test_enroll_student_adds_student_to_course
+test_assign_grade_to_unenrolled_student_raises_error
+6. Pull Request Process
 
+Before opening a PR:
 
-🔍 6. Pull Request (PR) Process
+1️⃣ Update your branch
 
-Before submitting a PR:
+git fetch origin
+git rebase origin/main
 
-✔ 1. Ensure your branch is up to date
-- git fetch origin
-- git rebase origin/main
+2️⃣ Run tests
 
-✔ 2. Run the full test suite
-- pytest
+pytest
 
-✔ 3. Validate commit messages follow conventions
+3️⃣ Validate commit messages follow conventions
 
-✔ 4. Confirm all docs relevant to your change are updated
+4️⃣ Update documentation if needed
 
-PR Content Requirements
-Every PR must include:
+PR Content
 
-- PR Title
-- Clear and descriptive, e.g.:
-    refactor(application): introduce DI-based repositories
-- PR Body
-- What changed
-- Why the change was needed
-- Architectural impact
-- Test coverage summary
-- Breaking changes, if any
+Every PR should describe:
 
+What changed
 
+Why the change was needed
 
-🤖 7. Automated GitHub Architecture Review
+Architectural impact
 
-This project includes a GPT-based architecture reviewer located in:
+Test coverage
 
-.github/gpt/
-    ARCHITECTURE_RULES.md
-    pr_review_prompt.md
+Breaking changes (if any)
 
+Example PR title:
 
-When you submit a PR:
-- The pr-auto-review.yml workflow runs automatically
-- The GPT reviewer checks for:
-    * Clean Architecture boundary violations
-    * Missing tests
-    * Invalid imports
-    * Layer leakage
-    * Naming inconsistencies
+refactor(application): introduce repository DI in SMS constructor
+7. Architecture Review
 
-You must address all review findings before merging.
+Contributions should be reviewed for architectural consistency.
 
-📚 8. Documentation Requirements
-Every contributor must:
-- Update relevant docs under docs/
-- Update README.md if architecture or public APIs change
-- Keep test tree visualization in sync
+Reviewers should verify:
 
-Documentation is part of the contribution — not optional.
+No Clean Architecture boundary violations
 
-✔ 9. Coding Anti-Patterns (Forbidden)
-- Application layer importing concrete infrastructure classes
-- Domain models depending on repositories
-- Skipping tests for new behavior
-- Merging without PR review
-- Silent architectural changes
-- Massive commits that touch unrelated concerns
-- Using mutable default arguments
-- Using print debugging inside tests or production code
+Domain rules remain inside domain entities
 
+Application services remain orchestration-only
 
-🎉 10. Thank You!
+Infrastructure does not leak into higher layers
 
-Contributions following these guidelines will help keep the Student Management System:
-- robust
-- maintainable
-- architecturally consistent
-- scalable
-- testable
+Tests cover new or modified behavior
 
-Thank you for helping improve the project!
+Automated review workflows may assist this process.
 
-If you have questions, open a discussion or ask for guidance in your PR.
+8. Documentation Requirements
+
+Documentation is part of the contribution.
+
+Contributors must update:
+
+README.md when architecture or structure changes
+
+docs/ for architectural explanations
+
+CLI documentation when commands change
+
+Documentation must stay consistent with the actual repository structure.
+
+9. Forbidden Anti-Patterns
+
+The following patterns are not allowed:
+
+Application layer importing infrastructure implementations
+
+Domain entities depending on repositories
+
+Implementing business rules outside the domain layer
+
+Domain entities escaping the application boundary
+
+Skipping tests for behavioral changes
+
+Large commits mixing unrelated changes
+
+10. Thank You
+
+Contributions that follow these guidelines help keep the Student Management System:
+
+maintainable
+
+architecturally consistent
+
+scalable
+
+testable
+
+If you have questions, open a discussion or ask for clarification in your pull request.
