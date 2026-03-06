@@ -1,220 +1,217 @@
-# Student Management System CLI
+Student Management System CLI
+Overview
 
-## Overview
+The Student Management System (SMS) CLI is a command-line interface for interacting with the Student Management System application.
 
-The **Student Management System (SMS) CLI** is a command-line interface for interacting with the Student Management System application.
+The CLI is a thin, stateless presentation adapter over the application layer. Each invocation runs in a fresh process, making the CLI deterministic, scriptable, and automation-safe.
 
-The CLI is a **thin, stateless presentation adapter** over the application layer. Each invocation runs in a fresh process, making the CLI deterministic, scriptable, and automation-safe.
+The CLI interacts exclusively with application services and response models. It never accesses domain entities, repositories, or infrastructure components directly.
 
-This document defines the **public CLI contract**.
+This document defines the public CLI contract.
 
----
-
-## Architectural Guarantees
+Architectural Guarantees
 
 The CLI guarantees:
 
-* **Clean Architecture compliance**
+Clean Architecture compliance
 
-  * Depends only on the Application Layer
-  * Never accesses domain entities or repositories directly
-* **Stateless execution**
+Depends only on the Application Layer
 
-  * No shared or persistent process state
-  * Each command is independent
-* **Stable contracts**
+Never accesses domain entities or repositories directly
 
-  * Exit codes are part of the public API
-  * Output formatting is deterministic
+Consumes DTO inputs and renders Response Models
 
----
+Stateless execution
 
-## Command Structure
+No shared or persistent process state
 
-All commands follow the pattern:
+Each command is independent
 
-```text
+Stable contracts
+
+Exit codes are part of the public API
+
+Output behavior is deterministic
+
+Command semantics remain stable across minor releases
+
+The CLI functions purely as a presentation adapter, delegating all system behavior to the application layer.
+
+Command Structure
+
+Most commands follow the pattern:
+
 sms <resource> <action> [options]
-```
 
 Examples:
 
-```bash
 sms student add --id S01 --name "Alice"
 sms student show S01
 sms student list
 
 sms course add --code C01 --name "Math"
 sms enroll --student S01 --course C01
-```
 
-Each command maps **1:1** to a single application use case.
+Commands generally map 1:1 to a single application use case.
 
----
+The CLI intentionally exposes both:
 
-## Resources and Commands
+resource-oriented operations (student, teacher, course)
 
-### Student
+domain operations (enrollment, teacher assignment, grading)
 
-```bash
+This allows the interface to remain aligned with the underlying domain model.
+
+Resources and Commands
+Student
 sms student add --id <student_id> --name <name>
 sms student show <student_id>
 sms student list
 sms student remove <student_id>
-```
-
-### Teacher
-
-```bash
+Teacher
 sms teacher add --id <teacher_id> --name <name>
 sms teacher show <teacher_id>
 sms teacher list
 sms teacher remove <teacher_id>
-```
-
-### Course
-
-```bash
+Course
 sms course add --code <course_code> --name <name>
 sms course show <course_code>
 sms course list
 sms course remove <course_code>
-```
-
-### Cross-resource operations
-
-```bash
+Cross-resource operations
 sms enroll --student <student_id> --course <course_code>
 sms drop --student <student_id> --course <course_code>
 
 sms assign-teacher --teacher <teacher_id> --course <course_code>
 sms unassign-teacher <course_code>
-```
-
-### Grades
-
-```bash
+Grades
 sms grade assign --student <student_id> --course <course_code> --value <float>
 sms grade remove --student <student_id> --course <course_code>
-```
+Output Model
 
----
+Query commands print immutable response snapshots produced by the application layer.
 
-## Output Model
+Command-style operations print:
 
-* **Query commands** print immutable response snapshots
-* **Command-style operations** print:
-
-```text
 Success.
-```
 
-Output is intended for humans. Scripts should rely on exit codes, not output text.
+Output is intended for human readability.
+Automation and scripts should rely on exit codes, not output text.
 
----
+Exit Codes (Public Contract)
 
-## Exit Codes (Public Contract)
+Exit codes map directly to architectural error categories.
 
-| Code | Meaning                             |
-| ---: | ----------------------------------- |
-|    0 | Success                             |
-|    1 | CLI usage / syntax error            |
-|    2 | Application validation error        |
-|    3 | Domain rule violation               |
-|    4 | State error (not found / duplicate) |
-|   10 | System / unexpected error           |
+Code  Meaning
+0 Success
+1 CLI usage / syntax error
+2 Application validation error
+3 Domain rule violation
+4 State error (not found / duplicate)
+10  System / unexpected error
 
-Exit codes are deterministic and stable across versions.
+These codes remain stable across versions.
 
----
+Error Handling
 
-## Error Handling
+Errors are classified according to the architectural layer where they originate.
 
-* Errors are classified by type
-* Messages are human-facing
-* Exit codes are machine-facing
+CLI errors
+
+Invalid syntax
+
+Missing or malformed arguments
+
+Application errors
+
+Input validation failures
+
+Domain errors
+
+Business rule violations
+
+State errors
+
+Entity not found
+
+Duplicate identity
+
+Errors propagate unchanged from the application and domain layers, preserving their original semantic meaning.
+
+Messages are human-facing.
+Exit codes are machine-facing.
 
 Example:
 
-```bash
 sms enroll --student S01 --course C01
 # exit code: 3 (domain rule violation)
-```
-
----
-
-## Automation and Scripting
+Automation and Scripting
 
 The CLI is designed for automation:
 
-```bash
 if ! sms enroll --student S01 --course C01; then
   echo "Enrollment failed"
   exit 1
 fi
-```
 
-Do not parse output text for control flow.
+Scripts should rely on exit codes for control flow.
 
----
+Do not parse output text to determine success or failure.
 
-## Versioning Policy
+CLI Versioning and Stability
 
-This CLI represents **CLI v1 — Stable Contract**.
+This CLI represents CLI v1 — Stable Contract, starting with SMS version 1.0.0.
 
-From this point forward:
+The CLI contract is designed to remain stable even as internal architecture evolves.
 
-* Changes must be additive
-* Output changes are breaking changes
-* Exit code changes are breaking changes
+Stability Guarantees
 
----
+For all releases within the 1.x.y series:
 
-## CLI v1 Stability Guarantee
+Command names and hierarchical structure are stable
 
-The Student Management System (SMS) command-line interface is versioned
-and governed under a stable **CLI v1 contract** starting from version
-**1.0.0**.
+Required and optional flags retain their meaning
 
-### Stability Guarantees
+Exit code semantics remain stable and deterministic
 
-For all releases within the **1.x.y** series, the following guarantees
-apply:
+Error classification remains consistent
 
-- Command names and hierarchical structure are stable.
-- Required and optional flags retain their meaning.
-- Exit code semantics are stable and deterministic.
-- Error categorization (validation, domain, system/state) is stable.
-- Output semantics are stable at the meaning level (field intent and
-  classification), even if formatting evolves.
+Output semantics remain stable at the meaning level
 
-### Breaking Changes
+Formatting may evolve, but the semantic meaning of output fields will not change.
 
-Any of the following constitute a **breaking change** and require a
-major version bump:
+Breaking Changes
 
-- Renaming or removing commands or subcommands
-- Changing the meaning of existing flags or arguments
-- Changing exit code meanings
-- Reclassifying errors across categories
-- Altering the semantic meaning of output fields
-- Allowing domain entities to escape the application boundary
+The following require a major version bump:
 
-### Non-Breaking Changes
+Renaming or removing commands
 
-The following are considered backward-compatible:
+Changing the meaning of existing flags or arguments
 
-- Adding new commands or subcommands
-- Adding new optional flags
-- Introducing new infrastructure backends (e.g. persistence)
-- Performance improvements
-- Internal refactors that preserve observable behavior
+Changing exit code semantics
 
-This contract exists to ensure that users and scripts can rely on SMS
-behavior across releases without unexpected breakage.
+Reclassifying errors across categories
 
----
+Changing the semantic meaning of output fields
 
-## License
+Allowing domain entities to escape the application boundary
 
-Internal project documentation.
+Non-Breaking Changes
+
+The following are backward compatible:
+
+Adding new commands or subcommands
+
+Adding optional flags
+
+Adding infrastructure backends
+
+Performance improvements
+
+Internal refactors preserving observable behavior
+
+This contract ensures that scripts and automation remain reliable across releases.
+
+License
+
+This documentation is part of the Student Management System project.
