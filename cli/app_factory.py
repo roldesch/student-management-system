@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Dict, Literal
 
 from application.services.student_management_system import StudentManagementSystem
-from cli.application_api import StudentManagementSystemAPI
+from cli.application_adapter import StudentManagementSystemAPI
 from cli.errors import ConfigurationError
 
 from infrastructure.in_memory.in_memory_store import InMemoryStore
