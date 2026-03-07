@@ -9,8 +9,7 @@ from cli.errors import ConfigurationError
 from application.validation.errors import ApplicationValidationError
 from domain.exceptions.domain_exceptions import (
     DomainError,
-    EntityNotFoundError,
-    DuplicateEntityError,
+    StateError,
 )
 
 # -------------------------------------------------
@@ -59,7 +58,7 @@ def render_error(exc: Exception) -> Tuple[int, str]:
     # -------------------------------------------------
     # Repository / state errors
     # -------------------------------------------------
-    if isinstance(exc, (EntityNotFoundError, DuplicateEntityError)):
+    if isinstance(exc, StateError):
         return (
             EXIT_STATE_ERROR,
             _render_state_error(exc),
