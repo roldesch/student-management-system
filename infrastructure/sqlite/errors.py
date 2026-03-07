@@ -1,6 +1,9 @@
 # infrastructure/sqlite/errors.py
 
-class PersistenceError(Exception):
+from domain.exceptions.domain_exceptions import SMSError
+
+
+class PersistenceError(SMSError):
     """
     Base class for all persistence-layer errors.
 
